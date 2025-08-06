@@ -127,6 +127,12 @@ impl Instruction {
 }
 
 
+impl Clone for Instruction {
+    fn clone(&self) -> Instruction {
+        Instruction::new(self.name.clone(), self.format.clone(), self.stages.clone())
+    }
+}
+
 pub fn get_all_instructions(location: String) -> Vec<Instruction> {
     let paths = fs::read_dir(location).unwrap();
     let mut instructions: Vec<Instruction> = Vec::new();
