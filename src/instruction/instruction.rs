@@ -168,6 +168,6 @@ mod tests {
 
     #[test]
     fn test_get_all_instructions() {
-        let _ = get_all_instructions("/Users/michaelrudolf/Development/Rust/smiscasm/instructions/".to_string());
+        let _ = get_all_instructions(crate::expand_path("~/Development/Rust/smiscasm/instructions/").unwrap().to_str().unwrap().to_string());
     }
 }

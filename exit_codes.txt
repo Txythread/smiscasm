@@ -2,3 +2,4 @@
 100	Bad argument
 103	Bad implicit input file (like instruction files, configs)
 104	Read/Write Error
+105	Bad Code

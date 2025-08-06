@@ -11,6 +11,7 @@ use std::io::prelude::*;
 
 mod util;
 mod instruction;
+mod assembler;
 
 pub struct ArgumentList{
     file: Option<String>,
@@ -43,7 +44,7 @@ impl PartialEq for ArgumentList{
 
 
 fn main() {
-    let instructions_location = "/Users/michaelrudolf/Development/Rust/smiscasm/instructions".to_string();
+    let instructions_location = "/Users//Development/Rust/smiscasm/instructions".to_string();
 
     // Retrieve arguments from the terminal first
     let cli_args: Vec<String> = env::args().collect();
@@ -197,7 +198,7 @@ fn generate_instruction_table(location: String) {
 }
 
 
-fn expand_path(path_str: &str) -> Option<PathBuf> {
+pub fn expand_path(path_str: &str) -> Option<PathBuf> {
     let expanded = if path_str.starts_with("~/") {
         let home = env::var("HOME").ok()?;
         PathBuf::from(home).join(&path_str[2..])
