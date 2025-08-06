@@ -83,6 +83,8 @@ fn generate_instruction_table(location: String) {
     /// All instructions' control words; position in vector counts as address/caller.
     let all_control_words: Vec<u64> = vec![];
 
+    println!("something");
+
 
 }
 
