@@ -1,1 +1,2 @@
-100	Bad Argument
+100	Bad argument
+103	Bad implicit input file (like instruction files, configs)

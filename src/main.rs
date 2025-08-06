@@ -5,16 +5,21 @@ use std::fs;
 use std::path::PathBuf;
 use colorize;
 use colorize::AnsiColor;
+use crate::instruction::instruction::Instruction;
+
+mod util;
+mod instruction;
 
 pub struct ArgumentList{
     file: Option<String>,
     test: bool,                     // -t or --test
     output_name: Option<String>,    // -o or --output
+    generate_instruction_table: bool,
 }
 
 impl ArgumentList{
     pub fn new() -> ArgumentList{
-        ArgumentList{file: None, test: false, output_name: None}
+        ArgumentList{file: None, test: false, output_name: None, generate_instruction_table: false}
     }
 }
 
@@ -36,11 +41,18 @@ impl PartialEq for ArgumentList{
 
 
 fn main() {
+    let instructions_location = "/Users/michaelrudolf/Development/Rust/smiscasm/instructions".to_string();
+
     // Retrieve arguments from the terminal first
     let cli_args: Vec<String> = env::args().collect();
 
     // Generate a reasonable argument list
     let args = get_arguments_from_list(cli_args);
+
+    if args.generate_instruction_table{ generate_instruction_table(instructions_location); return; }
+
+    // Load the instructions
+    let instructions = instruction::instruction::get_all_instructions(instructions_location);
 
     // Load the file
     let path = expand_path(&args.file.unwrap()).unwrap();
@@ -48,7 +60,32 @@ fn main() {
 
 
     println!("{}", input_file);
+
+
+
 }
+
+fn generate_instruction_table(location: String) {
+    let instructions = instruction::instruction::get_all_instructions(location);
+    for instruction in instructions {
+        println!("--- {} ---", instruction.name);
+        println!("Format: {:?}", instruction.format);
+        println!("OP-Code: {:09b}", instruction.op_code);
+
+        for stage in instruction.stages.iter() {
+            let caller = stage.0;
+            let control_word = stage.1;
+
+            println!("{:016b}: {:064b}", caller, control_word);
+        }
+    }
+
+    /// All instructions' control words; position in vector counts as address/caller.
+    let all_control_words: Vec<u64> = vec![];
+
+
+}
+
 
 fn expand_path(path_str: &str) -> Option<PathBuf> {
     let expanded = if path_str.starts_with("~/") {
@@ -106,6 +143,10 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
                 match arg.as_str() {
                     "-t" | "--test" => {
                         result.test = true;
+                    }
+
+                    "--generate-instruction-table" => {
+                        result.generate_instruction_table = true;
                     }
                     _=>{
                         current_flag = Some(arg);
