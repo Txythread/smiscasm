@@ -1,4 +1,4 @@
-.section "CODE"
+.section "CODE" # Make a section named code
 main:
 	adrp x0, msg@PAGE
 	add x0, msg@PAGEOFF
