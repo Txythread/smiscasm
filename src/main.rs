@@ -55,7 +55,7 @@ fn main() {
     if args.generate_instruction_table{ generate_instruction_table(instructions_location); return; }
 
     // Load the instructions
-    let instructions = instruction::instruction::get_all_instructions(instructions_location);
+    let _ = instruction::instruction::get_all_instructions(instructions_location);
 
     // Load the file
     let path = expand_path(&args.file.unwrap()).unwrap();
@@ -86,7 +86,7 @@ fn generate_instruction_table(location: String) {
         }
     }
 
-    /// All instructions' control words; position in vector counts as address/caller.
+    // All instructions' control words; position in vector counts as address/caller.
     let mut all_control_words: Vec<u64> = vec![];
 
     for i in 0..65536{
@@ -144,14 +144,14 @@ fn generate_instruction_table(location: String) {
     }
 
     // Now store the list
-    let mut file1 = File::create("smiscasm_instructions-1-MSB.o");
-    let mut file2 = File::create("smiscasm_instructions-2.o");
-    let mut file3 = File::create("smiscasm_instructions-3.o");
-    let mut file4 = File::create("smiscasm_instructions-4.o");
-    let mut file5 = File::create("smiscasm_instructions-5.o");
-    let mut file6 = File::create("smiscasm_instructions-6.o");
-    let mut file7 = File::create("smiscasm_instructions-7.o");
-    let mut file8 = File::create("smiscasm_instructions-8-LSB.o");
+    let file1 = File::create("smiscasm_instructions-1-MSB.o");
+    let file2 = File::create("smiscasm_instructions-2.o");
+    let file3 = File::create("smiscasm_instructions-3.o");
+    let file4 = File::create("smiscasm_instructions-4.o");
+    let file5 = File::create("smiscasm_instructions-5.o");
+    let file6 = File::create("smiscasm_instructions-6.o");
+    let file7 = File::create("smiscasm_instructions-7.o");
+    let file8 = File::create("smiscasm_instructions-8-LSB.o");
 
     if file1.is_err() || file2.is_err() || file3.is_err() || file4.is_err() || file5.is_err() || file6.is_err() || file7.is_err() || file8.is_err(){
         let error = "Couldn't create file 'smiscasm_instructions-x.o' to store instructions in.".red().to_string();

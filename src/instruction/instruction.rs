@@ -33,7 +33,7 @@ impl Instruction {
     }
 
     pub fn from_string(string: String) -> Instruction {
-        /// List of all available micro operations
+        // List of all available micro operations
         let output_map_str: Vec<&str> = vec!["PC_OUT", "PC_IN", "PC_INC", "MEM_ADDR_PTR_IN"]; // The left-most string in the list will end up in the LSb of the control 'word'
 
         let output_map: Vec<String> = output_map_str.into_iter().map(|s| s.to_string()).collect();
