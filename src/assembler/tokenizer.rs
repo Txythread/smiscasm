@@ -23,7 +23,6 @@ fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
         for i in line.chars().enumerate() {
             let char = i.1.clone();
 
-            println!("chars: {}; marker?", &(last_character.to_string() + char.to_string().as_str()));
             if !in_string_literal {
                 // Check for whitespaces, especially \t and ' '
                 if char == ' ' || char == '\t' {
@@ -50,9 +49,7 @@ fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
                 }
 
                 // Check for double-character token markers
-                println!("Is {} a marker?", &(last_character.to_string() + char.to_string().as_str()));
                 if token_markers.contains(&(last_character.to_string() + char.to_string().as_str())) {
-                    println!("yep");
                     if !current_token.is_empty() {
                         // Remove the duplicate char
                         current_token.remove(current_token.len() - 1);
@@ -65,7 +62,6 @@ fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
                     last_character = char;
                     continue;
                 }
-                println!("nope");
             }
 
             // Check if a string literal starts/ends
@@ -100,7 +96,7 @@ fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
         }
 
         if in_string_literal {
-            let error = format!("String or character literal at line {} lacks trailing", line_number).red().to_string();
+            let error = format!("String or character literal at line {} lacks trailing.", line_number).red().to_string();
             eprintln!("{}", error);
             exit(105);
         }

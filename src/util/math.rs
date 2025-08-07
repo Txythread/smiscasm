@@ -23,10 +23,19 @@ pub(crate) fn resolve_string(string: String, replacements: Vec<Replacement>) -> 
         }
 
         if operand_1.is_none() {
-            operand_1 = Some(token.parse::<i64>().unwrap());
+            let op_1 = token.parse::<i64>();
+
+            if op_1.is_err() { return "".to_string(); }
+
+            operand_1 = Some(op_1.unwrap());
             continue;
         }
-        operand_2 = Some(token.parse::<i64>().unwrap());
+
+        let op_2 = token.parse::<i64>();
+
+        if op_2.is_err() { return "".to_string(); }
+
+        operand_2 = Some(op_2.unwrap());
         break;
     }
 
@@ -55,5 +64,6 @@ mod tests {
     fn test_resolve_string() {
         assert_eq!(resolve_string(String::from("3 * 8"), vec![]), "24");
         assert_eq!(resolve_string(String::from("15 + 3"), vec![]), "18");
+        assert_eq!(resolve_string(String::from("\"Hello world\""), vec![]), "");
     }
 }

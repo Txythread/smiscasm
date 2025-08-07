@@ -1,5 +1,7 @@
+x = 1...9
+
 0	OK
-100	Bad argument
-103	Bad implicit input file (like instruction files, configs)
-104	Read/Write Error
-105	Bad Code
+x00	Bad argument
+x03	Bad implicit input file (like instruction files, configs)
+x04	Read/Write Error
+x05	Bad Code
