@@ -4,4 +4,5 @@ x = 1...9
 x00	Bad argument
 x03	Bad implicit input file (like instruction files, configs)
 x04	Read/Write Error
-x05	Bad Code
+x05	Bad Input Code
+x99	Internal Error (sorry)

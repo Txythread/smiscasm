@@ -1,0 +1,270 @@
+use std::fmt::format;
+use std::io::BufRead;
+use std::process::exit;
+use colorize::AnsiColor;
+use crate::assembler::valuegen::ValueGenResult;
+use crate::util::replacement::Replacement;
+
+fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
+    let mut result: ValueReplResult = ValueReplResult {
+        global_constants: vec![],
+        sections: vec![],
+        code: vec![],
+        line_mapping: vec![],
+    };
+
+    result.global_constants = code.constants.clone();
+    result.sections = code.sections.clone();
+    result.line_mapping = code.line_mapping.clone();
+
+    for i in code.code.iter().enumerate() {
+        let line = i.1.clone();
+        let line_number = i.0;
+
+        let real_line_number = code.line_mapping.iter().find(| &&x | x.0 == line_number);
+
+        if real_line_number.is_none() {
+            let error = format!("Internal error with line mapping likely caused by \"valuegen\", the line number in it's resulting code is: {}.", line_number).red().to_string();
+            eprintln!("{}", error);
+            exit(199);
+        }
+
+        let real_line_number = real_line_number.unwrap().1;
+
+        let first_token = line.first();
+
+        if first_token.is_none() { continue; }
+
+        let first_token = first_token.unwrap();
+
+        if first_token == "." {
+            // At this stage, the only thing it could be is data.
+            let second_token = line[1].clone();
+
+            match second_token.as_str() {
+                "ascii" => {
+                    let text = line[2].clone();
+
+                    if !text.is_ascii() {
+                        let error = format!("Text in ASCII data is expected to consist of ASCII characters only, but \"{}\" in line {} doesn't follow that rule.", text, real_line_number).red().to_string();
+                        eprintln!("{}", error);
+                        exit(105);
+                    }
+
+                    result.code.push((vec![text], LineKind::ASCII));
+                    continue;
+                }
+
+                _ => {
+                    let error = format!("Internal error with data likely caused by \"valuegen\". Please double check your code at line {} for wrong data types.", real_line_number).red().to_string();
+                    eprintln!("{}", error);
+                    exit(199);
+                }
+            }
+        }
+
+        // Split the arguments
+        let mut args: Vec<Vec<String>> = vec![];
+        let mut current_argument: Vec<String> = vec![];
+        for i in 1..line.len() {
+            let token = line[i].clone();
+
+            if token == "," {
+                args.push(current_argument.clone());
+                println!("Added argument: {}", current_argument.join(";"));
+                current_argument = vec![];
+                continue;
+            }
+
+            current_argument.push(token);
+        }
+        if !current_argument.is_empty() {
+            println!("Added argument: {}", current_argument.join(";"));
+            args.push(current_argument.clone());
+        }
+
+        // Go through every argument and hold it's final version and if the value is immediate or refers to a global constant
+        let mut final_args: Vec<String> = vec![];
+        let mut args_contain_global_constants = false;
+        for arg in args {
+            // Check if it's complex
+            print!("Arg: {}", arg.join(";"));
+            if arg.len() == 3{
+                if arg[1] != "@" {
+                    let error = format!("Argument at line {} can't be decoded.", real_line_number).red().to_string();
+                    eprintln!("{}", error);
+                    exit(205);
+                }
+
+                let arg0_value = code.constants.iter().find(| &x | x.clone().get_name() == arg[0].as_str());
+
+                if arg0_value.is_none() {
+                    let error = format!("Label {} called in line {} does not exist.", arg[0], real_line_number).red().to_string();
+                    eprintln!("{}", error);
+                    exit(305);
+                }
+
+                let arg0_value = arg0_value.unwrap().clone().get_value();
+                let mut arg0_value_split = arg0_value.split(':');
+
+                if arg0_value_split.clone().count() != 2{
+                    let error = format!("Expected address before modifier, but line {} violates this rule.", real_line_number).red().to_string();
+                    eprintln!("{}", error);
+                    exit(405);
+                }
+
+                let arg0_page = arg0_value_split.next().unwrap();
+                let arg0_pageoff = arg0_value_split.next().unwrap();
+
+                match arg[2].as_str() {
+                    "PAGE" => {
+                        final_args.push("@".to_owned() + arg0_page);
+                        args_contain_global_constants = true;
+                    }
+
+                    "PAGEOFF" => {
+                        final_args.push(arg0_pageoff.to_string());
+                    }
+
+                    _ => {
+                        let error = format!("Modifier {} called in line {} does not exist.", arg[2], real_line_number).red().to_string();
+                        eprintln!("{}", error);
+                        exit(505);
+                    }
+                }
+                continue;
+            }
+
+            // If not, just replace values normally
+            if arg.len() != 1{
+                let error = format!("Argument at line {} can't be decoded.", real_line_number).red().to_string();
+                eprintln!("{}", error);
+                exit(605);
+            }
+
+            let arg = arg[0].clone();
+            let arg_c1 = arg.clone().chars().nth(0).unwrap();
+            let arg_except_first_char = arg[1..].to_string();
+
+            // Check if it is an immediate value or a register
+            if arg.parse::<i32>().is_ok() || (arg_c1 == 'x' && arg_except_first_char.parse::<i32>().is_ok()){
+                // Just a normal value, nothing to replace
+                final_args.push(arg);
+                continue;
+            }
+
+            let replacement = code.constants.iter().find(| &x | x.get_name() == arg);
+
+            if replacement.is_none() {
+                let error = format!("\"{}\" in line {} is not a constant.", arg, real_line_number).red().to_string();
+                eprintln!("{}", error);
+                exit(605);
+            }
+
+            let replacement = replacement.unwrap().clone();
+
+            if replacement.get_is_global(){
+                final_args.push("@".to_owned() + arg.clone().as_str()); // Has to be changed later
+            } else {
+                final_args.push(replacement.get_value());
+            }
+        }
+
+        // Add the instruction back to the top of the chain
+        final_args.insert(0, first_token.to_string());
+
+
+        result.code.push((final_args, LineKind::Code(args_contain_global_constants)));
+    }
+
+
+    result
+}
+
+pub struct ValueReplResult{
+    pub global_constants: Vec<Replacement>,
+    pub sections: Vec<(String, u32)>,       //Name of the section followed by the correct line (starting at 0) from the resulting code.
+    pub code: Vec<(Vec<String>, LineKind)>,     // The lines of code and if they contain immediate values encoded in global constants.
+    pub line_mapping: Vec<(usize, usize)>,  // How the new line number in the resulting code above (.0) refers to the original line number (.1)
+}
+
+#[derive(Clone)]
+#[derive(Debug)]
+pub enum LineKind {
+    Code(bool),     // bool: immediate value?
+    ASCII,
+}
+
+impl PartialEq for LineKind {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (LineKind::Code(a), LineKind::Code(b)) => a == b,
+            (LineKind::ASCII, LineKind::ASCII) => true,
+            _ => false,
+        }
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use crate::assembler::valuegen::ValueGenResult;
+    use crate::assembler::valuerepl::{replace_values_in_code, LineKind};
+    use crate::util::replacement::Replacement;
+
+    #[test]
+    fn test_replace_values_in_code(){
+        let mut input_constants = vec![
+            Replacement::new("xyz".to_string(), "10".to_string(), false),
+            Replacement::new("zyx".to_string(), "16".to_string(), false),
+            Replacement::new("abc".to_string(), "20".to_string(), false),
+            Replacement::new("main".to_string(), "CODE:0".to_string(), true),
+            Replacement::new("msg".to_string(), "DATA:0".to_string(), true),
+        ];
+
+        input_constants[0].set_is_global(true);
+        input_constants[3].set_is_global(true);
+
+        let input_sections : Vec<(String, u32)>= vec![
+            ("CODE".to_string(), 0),
+            ("DATA".to_string(), 1),
+        ];
+
+        let input_code = vec![
+            vec!["adrp".to_string(), "x0".to_string(), ",".to_string(), "msg".to_string(), "@".to_string(), "PAGE".to_string()],
+            vec!["add".to_string(), "x0".to_string(), ",".to_string(), "msg".to_string(), "@".to_string(), "PAGEOFF".to_string()],
+            vec![".".to_string(), "ascii".to_string(), "Hi".to_string()],
+        ];
+
+        let expected_output_code: Vec<(Vec<String>, LineKind)> = vec![
+            (vec!["adrp".to_string(), "x0".to_string(), "@DATA".to_string()], LineKind::Code(true)),
+            (vec!["add".to_string(), "x0".to_string(), "0".to_string()], LineKind::Code(false)),
+            (vec!["Hi".to_string()], LineKind::ASCII)
+        ];
+
+
+
+        let line_mapping_input = vec![(0, 1), (1, 1), (2, 2)];
+
+        let input = ValueGenResult {
+            constants: input_constants,
+            sections: input_sections,
+            code: input_code,
+            line_mapping: line_mapping_input,
+        };
+
+        let result = replace_values_in_code(input);
+
+        assert_eq!(result.code.len(), expected_output_code.len());
+
+        for i in 0..result.code.len() {
+            let expected = expected_output_code[i].clone();
+            let actual = result.code[i].clone();
+
+            assert_eq!(expected, actual);
+        }
+
+
+    }
+}
