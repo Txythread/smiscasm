@@ -1,4 +1,3 @@
-use std::fmt::format;
 use std::io::BufRead;
 use std::process::exit;
 use colorize::AnsiColor;
