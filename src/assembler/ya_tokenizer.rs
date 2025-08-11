@@ -6,7 +6,7 @@ use crate::assembler::ya_tokenizer::InstructionArgs::{Global, Immediate, Registe
 
 // Yet another tokenizer
 /// Tokenizes ValueReplResult into YATokenizerResult
-fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
+pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
     let mut result = YATokenizerResult {
         code: vec![],
         global_constants: vec![],
@@ -15,7 +15,7 @@ fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
     };
 
     // Copy all global constants
-    result.global_constants = from.global_constants.clone().iter().filter(|&x| x.get_is_global()).map(|x| x.clone()).collect();
+    result.global_constants = from.global_constants.clone().iter().filter(|&x| x.get_is_global() || x.get_is_function()).map(|x| x.clone()).collect();
 
     // Go through all the lines
     for i in from.code.iter().enumerate() {
@@ -97,7 +97,7 @@ fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
     result
 }
 
-struct YATokenizerResult {
+pub struct YATokenizerResult {
     pub code: Vec<Line>,
     pub global_constants: Vec<Replacement>,
     pub sections: Vec<(String, u32)>,
@@ -105,7 +105,7 @@ struct YATokenizerResult {
 }
 
 #[derive(Debug)]
-enum Line{
+pub enum Line{
     Instruction(String, Vec<InstructionArgs>),      // Name and args
     ASCII(String),                                  // ASCII Text
 }
@@ -130,7 +130,7 @@ impl Clone for Line {
 }
 
 #[derive(Debug)]
-enum InstructionArgs{
+pub enum InstructionArgs{
     Register(u8),                                   // Only least significant 6 bits
     Immediate(u16),                                 // Least significant 11 are value, the 12th one from the right is the sign, the 13th one is "shift by eleven bits"
     Global(String),                                 // The name of the global constant

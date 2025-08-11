@@ -1,0 +1,5 @@
+hlt # NAME
+# no args
+FA # 0xA0 is the commands representation in the OP-CODE
+
+RESET_MICRO

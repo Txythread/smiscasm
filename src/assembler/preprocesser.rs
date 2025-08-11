@@ -1,7 +1,7 @@
 // Removes comments, empty lines, splits lines into parts
 #[allow(dead_code)]
 /// Removes unnecessary information, splits text into lines and tokens
-fn preprocess(code: String) -> Vec<String> {
+pub fn preprocess(code: String) -> Vec<String> {
     // Split into lines at newline characters
     let mut lines: Vec<String> = code.lines().map(|x| x.to_string()).collect();
 

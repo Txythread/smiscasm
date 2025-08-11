@@ -1,10 +1,9 @@
-use std::io::BufRead;
 use std::process::exit;
 use colorize::AnsiColor;
 use crate::assembler::valuegen::ValueGenResult;
 use crate::util::replacement::Replacement;
 
-fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
+pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
     let mut result: ValueReplResult = ValueReplResult {
         global_constants: vec![],
         sections: vec![],
@@ -70,7 +69,6 @@ fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
 
             if token == "," {
                 args.push(current_argument.clone());
-                println!("Added argument: {}", current_argument.join(";"));
                 current_argument = vec![];
                 continue;
             }
@@ -78,7 +76,6 @@ fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
             current_argument.push(token);
         }
         if !current_argument.is_empty() {
-            println!("Added argument: {}", current_argument.join(";"));
             args.push(current_argument.clone());
         }
 
@@ -87,7 +84,6 @@ fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
         let mut args_contain_global_constants = false;
         for arg in args {
             // Check if it's complex
-            print!("Arg: {}", arg.join(";"));
             if arg.len() == 3{
                 if arg[1] != "@" {
                     let error = format!("Argument at line {} can't be decoded.", real_line_number).red().to_string();

@@ -1,0 +1,21 @@
+adrp # NAME
+x i # register, immediate value
+C2 # 0xA0 is the commands representation in the OP-CODE
+
+# Load the next address into the memory address pointer
+PC_OUT
+MEM_ADDR_PTR_IN
+
+@STAGE	# Load the instruction into the instruction register, increment the program counter by 4B
+PC_INC
+MEM_OUT
+INSTR_IN
+# Please note that up to now, THIS IS NOT THE CORRECT INSTRUCTION, as the loading stage always comes from the last instruction, this will, however, be exected until this stage in the next round.
+
+@STAGE
+IMMEDIATE_OUT # The addressed ('called') register from the first argument
+CAL_REG_A_IN
+RESET_MICRO # go back to zero to load the next instruction
+
+# And yes, adding some shit to some shit takes 5 stages lol, IPC for this instruction: 0.2.
+# In fact, with the current design, 0.333 (tho this would be something like a nop) is the practical minimum for any regular instruction

@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 colorize = "0.1.0"
+backtrace = "0.3.74"
+termimad = "0.33.0"

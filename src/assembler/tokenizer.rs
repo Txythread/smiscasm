@@ -2,7 +2,7 @@ use std::process::exit;
 use colorize::*;
 
 #[allow(dead_code)]
-fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
+pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
     // The remaining spaces always start a new token, but are themselves to be ignored.
     // '.',  '@',  ':',  '0x',  '0b', '0o'  '[',  ']',  '(',  ')',  ',',  '<',  '>',  '+',  '-',  '*',  '/',  '&'  &  '%'
     // also separate strings into tokens (except when in string/char literals), but also serve as tokens themselves.
@@ -180,7 +180,6 @@ mod tests {
         let result = tokenize(input);
 
         for i in 0..result.len(){
-            println!("Expected: {:?} Result: {:?}", expected[i], result[i]);
             for j in 0..expected[i].len(){
                 assert_eq!(expected[i][j], result[i][j]);
             }

@@ -12,8 +12,8 @@ loop:
 	out x2
 	mov x0, x3
 	sub x3, x1
-	jmpz x3, end
-	jmp loop
+	#jmpz x3, end
+	#jmp loop
 
 end:
 	hlt
@@ -21,4 +21,4 @@ end:
 .section "DATA"
 msg:
 	.ascii "Hello, world!"
-msg_end
+msg_end:

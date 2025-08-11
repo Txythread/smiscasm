@@ -6,23 +6,33 @@ use std::path::PathBuf;
 use colorize;
 use colorize::AnsiColor;
 use crate::instruction::instruction::Instruction;
+use crate::assembler::assembler::assemble;
+use crate::help::help::print_help;
 use std::fs::File;
 use std::io::prelude::*;
+
 
 mod util;
 mod instruction;
 mod assembler;
+mod help;
 
 pub struct ArgumentList{
-    file: Option<String>,
-    test: bool,                     // -t or --test
-    output_name: Option<String>,    // -o or --output
-    generate_instruction_table: bool,
+    pub file: Option<String>,
+    pub help: bool,                     // -t or --test
+    pub output_name: Option<String>,    // -o or --output
+    pub generate_instruction_table: bool,
 }
 
 impl ArgumentList{
     pub fn new() -> ArgumentList{
-        ArgumentList{file: None, test: false, output_name: None, generate_instruction_table: false}
+        ArgumentList{file: None, help: false, output_name: None, generate_instruction_table: false}
+    }
+
+    /// Checks whether the current amount of data is enough (0) or the file name is missing (1)
+    pub fn needs_input_file(&self) -> bool{
+        let is_ok = self.help || self.generate_instruction_table || self.file.is_some();
+        !is_ok
     }
 }
 
@@ -30,7 +40,7 @@ impl Debug for ArgumentList{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ArgumentList")
             .field("file", &self.file)
-            .field("test", &self.test)
+            .field("test", &self.help)
             .field("output_name", &self.output_name)
             .finish()
     }
@@ -38,34 +48,42 @@ impl Debug for ArgumentList{
 
 impl PartialEq for ArgumentList{
     fn eq(&self, other: &Self) -> bool{
-        self.file == other.file && self.test == other.test
+        self.file == other.file && self.help == other.help
     }
 }
 
 
 fn main() {
-    let instructions_location = "/Users//Development/Rust/smiscasm/instructions".to_string();
+    let instructions_location = expand_path("~/Development/Rust/smiscasm/instructions").unwrap().to_str().unwrap().to_string();
 
     // Retrieve arguments from the terminal first
     let cli_args: Vec<String> = env::args().collect();
 
     // Generate a reasonable argument list
-    let args = get_arguments_from_list(cli_args);
+    let mut args = get_arguments_from_list(cli_args);
 
     if args.generate_instruction_table{ generate_instruction_table(instructions_location); return; }
 
+    if args.help { print_help(); return; }
+
     // Load the instructions
-    let _ = instruction::instruction::get_all_instructions(instructions_location);
+    let instructions = instruction::instruction::get_all_instructions(instructions_location);
 
     // Load the file
-    let path = expand_path(&args.file.unwrap()).unwrap();
+    let path = expand_path(&args.file.clone().unwrap()).unwrap();
     let input_file = fs::read_to_string(path).unwrap();
 
+    let binary = assemble(input_file, instructions);
 
-    println!("{}", input_file);
+    // Generate the output file name in case it doesn't exist.
+    if args.output_name.is_none(){
+        args.output_name = Some(args.file.clone().unwrap().to_string().clone().strip_suffix(".s").unwrap().to_string());
+        args.output_name = Some(args.output_name.unwrap().clone() + ".o");
+    }
 
+    let mut file = File::create(args.output_name.clone().unwrap()).unwrap();
 
-
+    file.write_all(binary.as_slice()).unwrap();
 }
 
 
@@ -73,19 +91,6 @@ fn main() {
 // But it's not slow enough and doesn't take up too much RAM (on my machine at least; lol) for me to seriously care about it.
 fn generate_instruction_table(location: String) {
     let instructions = instruction::instruction::get_all_instructions(location);
-    for instruction in instructions.iter() {
-        println!("--- {} ---", instruction.name);
-        println!("Format: {:?}", instruction.format);
-        println!("OP-Code: {:09b}", instruction.op_code);
-
-        for stage in instruction.stages.iter() {
-            let caller = stage.0;
-            let control_word = stage.1;
-
-            println!("{:016b}: {:064b}", caller, control_word);
-        }
-    }
-
     // All instructions' control words; position in vector counts as address/caller.
     let mut all_control_words: Vec<u64> = vec![];
 
@@ -252,8 +257,8 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
                 // Therefore, look if the next argument also needs to be checked or the argument can be added right away
 
                 match arg.as_str() {
-                    "-t" | "--test" => {
-                        result.test = true;
+                    "-h" | "--help" => {
+                        result.help = true;
                     }
 
                     "--generate-instruction-table" => {
@@ -269,7 +274,6 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
             // The argument is not a flag, nor is it used after a flag, ...
             // ... so it has to be the name of the file
             if result.file.is_some(){
-                println!("Result: {:?}", result);
                 let error = format!("\"{}\" and \"{:?}\" can't both be input files.", result.file.clone().unwrap(), arg).red().to_string();
                 eprintln!("{}", error);
                 exit(100);
@@ -286,7 +290,7 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
         exit(100);
     }
 
-    if result.file.is_none(){
+    if result.needs_input_file(){
         let error = "No input files provided.".red().to_string();
         eprintln!("{}", error);
         exit(100);

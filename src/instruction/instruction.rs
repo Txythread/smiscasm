@@ -3,6 +3,7 @@ use std::string::ToString;
 use std::fs;
 use colorize::AnsiColor;
 use crate::util::remove_comments::remove_comments_in_line;
+#[derive(Debug)]
 pub struct Instruction {
     pub name: String,
     pub format: Vec<bool>,              // A 0 is a register, a 1 an immediate value
@@ -15,18 +16,24 @@ impl Instruction {
         Instruction { name, format, op_code: 0, stages }
     }
 
-    /// Check whether a instruction's format is possible
+    pub fn new_with_op(name: String, format: Vec<bool>, op_code: u16, stages: Vec<(u16, u64)>) -> Instruction {
+        Instruction { name, format, op_code, stages }
+    }
+
+    /// Check whether an instruction's format is possible
     pub fn check(&self) -> bool /*should be zero*/{
         // Check length
         if self.format.iter().count() > 3{
             return false;
         }
 
-        // Check whether any other argument than the last one is an immediate value
+        // Check whether any other argument other than the last one is an immediate value.
         let mut format = self.format.clone();
-        format.remove(0);
-        for i in format.iter() {
-            if *i { return false /* nope */ }
+        if format.len() != 0{
+            format.remove(0);
+            for i in format.iter() {
+                if *i { return false /* nope */ }
+            }
         }
 
         false /*success*/
@@ -34,7 +41,7 @@ impl Instruction {
 
     pub fn from_string(string: String) -> Instruction {
         // List of all available micro operations
-        let output_map_str: Vec<&str> = vec!["PC_OUT", "PC_IN", "PC_INC", "MEM_ADDR_PTR_IN"]; // The left-most string in the list will end up in the LSb of the control 'word'
+        let output_map_str: Vec<&str> = vec!["PC_OUT", "PC_IN", "PC_INC", "MEM_ADDR_PTR_IN", "ALU_IN_A", "ALU_IN_B", "CAL_REG_A_IN", "CAL_REG_B_IN", "CAL_REG_A_OUT", "CAL_REG_B_OUT", "IMMEDIATE_OUT", "INSTR_IN", "MEM_OUT", "PLUS_OUT", "RESET_MICRO", "STDTRANS_IN", "STDTRANS_OUT", "STDTRANS_SEND"]; // The left-most string in the list will end up in the LSb of the control 'word'
 
         let output_map: Vec<String> = output_map_str.into_iter().map(|s| s.to_string()).collect();
 
@@ -129,7 +136,7 @@ impl Instruction {
 
 impl Clone for Instruction {
     fn clone(&self) -> Instruction {
-        Instruction::new(self.name.clone(), self.format.clone(), self.stages.clone())
+        Instruction::new_with_op(self.name.clone(), self.format.clone(), self.op_code, self.stages.clone())
     }
 }
 
@@ -137,7 +144,8 @@ pub fn get_all_instructions(location: String) -> Vec<Instruction> {
     let paths = fs::read_dir(location).unwrap();
     let mut instructions: Vec<Instruction> = Vec::new();
 
-    for path in paths {
+    for path in paths.enumerate() {
+        let path = path.1;
         if path.is_err() { continue; }
 
         let path = path.unwrap().path();
@@ -155,7 +163,13 @@ pub fn get_all_instructions(location: String) -> Vec<Instruction> {
             exit(103);
         }
 
-        instructions.push(instruction);
+        // Don't ask why
+        instructions.push(Instruction {
+            name: instruction.name.clone(),
+            format: instruction.format.clone(),
+            op_code: instruction.op_code.clone(),
+            stages: instruction.stages.clone(),
+        });
     }
 
     instructions

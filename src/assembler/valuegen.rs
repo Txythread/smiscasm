@@ -35,8 +35,6 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
 
             match command.unwrap().as_str() {
                 "section" => {
-                    let line_number_in_result = result.code.len();
-
                     if line.len() != 5 {
                         let error = format!("Section naming at line {} can't be read.", line_number).red().to_string();
                         eprintln!("{}", error);
@@ -50,7 +48,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     }
 
                     let name = line[3].clone();
-                    let section: (String, u32) = (name, line_number_in_result as u32);
+                    let section: (String, u32) = (name, /*line_number_in_result*/bytes_count as u32);
                     result.sections.push(section);
                     current_section_start = bytes_count;
                 }
@@ -90,9 +88,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                         exit(105)
                     }
                     let global_variable_name = line[2].clone();
-                    println!("Globalizing {} (before: {:?}", global_variable_name, global_constants_names);
                     global_constants_names.push(global_variable_name.clone());
-                    println!("After: {:?}", global_constants_names);
                 }
 
                 _ => {
@@ -196,7 +192,6 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     result.constants.push(replacement);
                 }
             }
-            println!("171: GC Names: {:?}", global_constants_names);
             continue;
         }
 
@@ -283,7 +278,7 @@ mod tests{
 
         let expected_sections : Vec<(String, u32)>= vec![
             ("CODE".to_string(), 0),
-            ("DATA".to_string(), 1),
+            ("DATA".to_string(), 4),
         ];
 
         let expected_code = vec![
