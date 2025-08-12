@@ -1,8 +1,11 @@
 use std::process::exit;
 use std::string::ToString;
-use std::fs;
 use colorize::AnsiColor;
+use include_dir::{include_dir, Dir};
 use crate::util::remove_comments::remove_comments_in_line;
+
+const INSTRUCTION_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/instructions");
+
 #[derive(Debug)]
 pub struct Instruction {
     pub name: String,
@@ -140,22 +143,14 @@ impl Clone for Instruction {
     }
 }
 
-pub fn get_all_instructions(location: String) -> Vec<Instruction> {
-    let paths = fs::read_dir(location).unwrap();
+pub fn get_all_instructions() -> Vec<Instruction> {
+    let files = INSTRUCTION_DIR.files();
     let mut instructions: Vec<Instruction> = Vec::new();
 
-    for path in paths.enumerate() {
-        let path = path.1;
-        if path.is_err() { continue; }
+    for file in files.enumerate() {
+        let file_contents = file.to_owned().1.contents_utf8().unwrap();
 
-        let path = path.unwrap().path();
-
-        let file = fs::read_to_string(path.to_str().unwrap());
-
-        if file.is_err() { continue; }
-        let file = file.unwrap();
-
-        let instruction = Instruction::from_string(file);
+        let instruction = Instruction::from_string(file_contents.to_string());
 
         if instruction.check() {
             let error = format!("Instruction named {} didn't pass instruction check.", instruction.name).red().to_string();
@@ -182,6 +177,6 @@ mod tests {
 
     #[test]
     fn test_get_all_instructions() {
-        let _ = get_all_instructions(crate::expand_path("~/Development/Rust/smiscasm/instructions/").unwrap().to_str().unwrap().to_string());
+        let _ = get_all_instructions();
     }
 }

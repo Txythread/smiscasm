@@ -11,7 +11,6 @@ use crate::help::help::print_help;
 use std::fs::File;
 use std::io::prelude::*;
 
-
 mod util;
 mod instruction;
 mod assembler;
@@ -54,24 +53,30 @@ impl PartialEq for ArgumentList{
 
 
 fn main() {
-    let instructions_location = expand_path("~/Development/Rust/smiscasm/instructions").unwrap().to_str().unwrap().to_string();
-
     // Retrieve arguments from the terminal first
     let cli_args: Vec<String> = env::args().collect();
 
     // Generate a reasonable argument list
     let mut args = get_arguments_from_list(cli_args);
 
-    if args.generate_instruction_table{ generate_instruction_table(instructions_location); return; }
+    if args.generate_instruction_table{ generate_instruction_table(); return; }
 
     if args.help { print_help(); return; }
 
     // Load the instructions
-    let instructions = instruction::instruction::get_all_instructions(instructions_location);
+    let instructions = instruction::instruction::get_all_instructions();
 
     // Load the file
     let path = expand_path(&args.file.clone().unwrap()).unwrap();
-    let input_file = fs::read_to_string(path).unwrap();
+    let input_file = fs::read_to_string(path.clone());
+
+    if input_file.is_err() {
+        let msg = format!("Input file not found: {}", path.to_str().unwrap().to_string()).red().to_string();
+        eprintln!("{}", msg);
+        exit(100);
+    }
+
+    let input_file = input_file.unwrap();
 
     let binary = assemble(input_file, instructions);
 
@@ -89,8 +94,8 @@ fn main() {
 
 // This function is slow as fuck, I know that and I got ideas on how to solve it.
 // But it's not slow enough and doesn't take up too much RAM (on my machine at least; lol) for me to seriously care about it.
-fn generate_instruction_table(location: String) {
-    let instructions = instruction::instruction::get_all_instructions(location);
+fn generate_instruction_table() {
+    let instructions = instruction::instruction::get_all_instructions();
     // All instructions' control words; position in vector counts as address/caller.
     let mut all_control_words: Vec<u64> = vec![];
 
@@ -165,7 +170,7 @@ fn generate_instruction_table(location: String) {
     }
 
     // Convert the list of u64 to a list of u8.
-    // The output is needed in 8 seperate files for each EEPROM.
+    // The output is needed in 8 separate files for each EEPROM.
     // File one represents the MSB (byte not bit) while file eight represents the LSB.
     let mut control_words_u8: [[u8; 65536]; 8] = [[0; 65536]; 8];
 
