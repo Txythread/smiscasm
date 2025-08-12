@@ -15,7 +15,7 @@ pub fn perform_last_name(input: YATokenizerResult, instructions: Vec<Instruction
     // Add the amount of sections
     append_u16_to_vec(&mut result, input.sections.len() as u16);
     // Add the amount of global constants
-    append_u16_to_vec(&mut result, input.global_constants.len() as u16);
+    append_u16_to_vec(&mut result, input.global_constants.iter().filter(| &x | x.clone().get_is_global()).count() as u16);
 
     // Add all the sections
     for section in input.sections.iter() {
@@ -30,6 +30,8 @@ pub fn perform_last_name(input: YATokenizerResult, instructions: Vec<Instruction
 
     // Add all the constants
     for global in input.global_constants.iter() {
+        if !global.get_is_global() { continue; }
+
         let name = global.clone().get_name().clone();
         let value = global.clone().get_value();
 

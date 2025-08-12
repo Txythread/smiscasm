@@ -1,3 +1,4 @@
+.global main
 .section "CODE"
 main:
 	adrp x0, msg@PAGE
