@@ -5,7 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 use colorize;
 use colorize::AnsiColor;
-use crate::instruction::instruction::Instruction;
+use crate::instruction::instruction::{Instruction, micro_operation_at};
 use crate::assembler::assembler::assemble;
 use crate::help::help::print_help;
 use std::fs::File;
@@ -18,19 +18,20 @@ mod help;
 
 pub struct ArgumentList{
     pub file: Option<String>,
-    pub help: bool,                     // -t or --test
-    pub output_name: Option<String>,    // -o or --output
-    pub generate_instruction_table: bool,
+    pub help: bool,                             // -t or --test
+    pub output_name: Option<String>,            // -o or --output
+    pub get_micro_operation: Option<String>,    // --get-micro-operation
+    pub generate_instruction_table: bool,       // --generate-instructions-table
 }
 
 impl ArgumentList{
     pub fn new() -> ArgumentList{
-        ArgumentList{file: None, help: false, output_name: None, generate_instruction_table: false}
+        ArgumentList{file: None, help: false, output_name: None, generate_instruction_table: false, get_micro_operation: None}
     }
 
     /// Checks whether the current amount of data is enough (0) or the file name is missing (1)
     pub fn needs_input_file(&self) -> bool{
-        let is_ok = self.help || self.generate_instruction_table || self.file.is_some();
+        let is_ok = self.help || self.generate_instruction_table || self.file.is_some() || self.get_micro_operation.is_some();
         !is_ok
     }
 }
@@ -59,9 +60,11 @@ fn main() {
     // Generate a reasonable argument list
     let mut args = get_arguments_from_list(cli_args);
 
-    if args.generate_instruction_table{ generate_instruction_table(); return; }
+    if args.generate_instruction_table { generate_instruction_table(); return; }
 
     if args.help { print_help(); return; }
+
+    if args.get_micro_operation.is_some() { get_micro_operation(args.get_micro_operation.unwrap().to_string()); return;}
 
     // Load the instructions
     let instructions = instruction::instruction::get_all_instructions();
@@ -91,6 +94,16 @@ fn main() {
     file.write_all(binary.as_slice()).unwrap();
 }
 
+fn get_micro_operation(idx: String) {
+    let idx_int = idx.parse::<usize>();
+
+    if idx_int.is_err() {
+        eprintln!("String \"{}\" is not a valid Micro Operation idx.", idx);
+        exit(104);
+    }
+
+    println!("That would be: {}", micro_operation_at(idx_int.unwrap()));
+}
 
 // This function is slow as fuck, I know that and I got ideas on how to solve it.
 // But it's not slow enough and doesn't take up too much RAM (on my machine at least; lol) for me to seriously care about it.
@@ -186,14 +199,14 @@ fn generate_instruction_table() {
         let part_7 = ((control_word_u64 & 0x000000000000FF00) >> 8) as u8;
         let part_8 =  (control_word_u64 & 0x00000000000000FF) as u8;
 
-        control_words_u8[0][i as usize] = part_1;
-        control_words_u8[1][i as usize] = part_2;
-        control_words_u8[2][i as usize] = part_3;
-        control_words_u8[3][i as usize] = part_4;
-        control_words_u8[4][i as usize] = part_5;
-        control_words_u8[5][i as usize] = part_6;
-        control_words_u8[6][i as usize] = part_7;
-        control_words_u8[7][i as usize] = part_8;
+        control_words_u8[0][i] = part_1;
+        control_words_u8[1][i] = part_2;
+        control_words_u8[2][i] = part_3;
+        control_words_u8[3][i] = part_4;
+        control_words_u8[4][i] = part_5;
+        control_words_u8[5][i] = part_6;
+        control_words_u8[6][i] = part_7;
+        control_words_u8[7][i] = part_8;
     }
 
 
@@ -245,6 +258,10 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
                         result.output_name = Some(value);
                     }
 
+                    "--get-micro-operation" => {
+                        result.get_micro_operation = Some(value);
+                    }
+
                     _=>{
                         let error = format!("Unknown flag {}.", flag).red().to_string();
                         eprintln!("{}", error);
@@ -269,6 +286,8 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
                     "--generate-instruction-table" => {
                         result.generate_instruction_table = true;
                     }
+
+
                     _=>{
                         current_flag = Some(arg);
                     }

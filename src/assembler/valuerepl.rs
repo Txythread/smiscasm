@@ -82,7 +82,6 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
 
         // Go through every argument and hold it's final version and if the value is immediate or refers to a global constant
         let mut final_args: Vec<String> = vec![];
-        let mut args_contain_global_constants = false;
         for arg in args {
             // Check if it's complex
             if arg.len() == 3{
@@ -182,7 +181,7 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
         final_args.insert(0, first_token.to_string());
 
 
-        result.code.push((final_args, LineKind::Code(args_contain_global_constants)));
+        result.code.push((final_args, LineKind::Code(false)));
     }
 
 

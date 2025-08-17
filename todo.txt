@@ -1,5 +1,4 @@
 TODO:
-* Add ZF & PF to instructions
 * Add include
 * Add public repos to include
 * Add section re-ordering to linker

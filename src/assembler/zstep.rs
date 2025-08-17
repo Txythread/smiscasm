@@ -18,17 +18,14 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
     let mut actual_bytes_written: u32 = 0; // The bytes written that were not written for memory page aligning
     section_starts_in_lines.remove(0);
 
-    println!("Section starts: {:?}", section_starts_in_lines);
-
     // Add commands and data
     for line in input.code.iter().enumerate() {
         let i = line.0;
         let line = line.1.clone();
 
         if let Some(next_section_start) = section_starts_in_lines.iter().nth(0){
-            let mut next_section_start = *next_section_start;
+            let next_section_start = *next_section_start;
             if actual_bytes_written == next_section_start{
-                println!("Creating new section");
                 // Look if the section was too long
                 if result.len() > next_page_start {
                     // Too long, throw error
@@ -144,34 +141,6 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
 
             Line::ASCII(text) => {
                 append_ascii_string_to_vec(&mut result, &mut actual_bytes_written, text.clone());
-            }
-        }
-    }
-
-    result
-}
-
-fn lines_with_global_values(code: Vec<Line>) -> Vec<u32>{
-    let mut result: Vec<u32> = Vec::new();
-
-    let bytes_per_instruction = 4; // 32 bits
-    let mut bytes_count = 0;
-
-    for x in code.iter().enumerate() {
-        let line = x.1.clone();
-
-        match line {
-            Line::Instruction(_, args) => {
-                let global = args.iter().find(|&x| matches!(x.clone(), InstructionArgs::Global(_)));
-
-                if global.is_some() {
-                    result.push(bytes_count);
-                }
-
-                bytes_count += bytes_per_instruction;
-            }
-            Line::ASCII(text) => {
-                bytes_count = bytes_count + text.len() as u32;
             }
         }
     }
