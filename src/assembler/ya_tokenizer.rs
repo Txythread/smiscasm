@@ -50,21 +50,29 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
                 for token in code[1..].iter() {
                     // If it can be passed immediately, it's just an immediate value.
                     if let Some(value) = token.parse::<i32>().ok(){
-                        // Correct the format
-                        // Choose last 11 bits
-                        let value_lsb: u16 = (value & 0x00_00_07_FF) as u16;
+                        if value % 2048 == 0 && value != 0{
+                            let value = value >> 11; // Ignore the last bits
 
-                        if value_lsb as i32 != value && value_lsb as i32 != -value {
-                            let error = format!("The value in line {} can't fit into the 11b of an immediate value.", real_line_number).red().to_string();
-                            eprintln!("{}", error);
-                            exit(105);
+                            let immediate_value = (value as u16 & 0x7FF)| 0x1000;
+                            println!("Pushing immediate value (PAGE): {} or in binary: {:b}", immediate_value, immediate_value);
+                            args.push(Immediate(immediate_value))
+                        }else {
+                            // Correct the format
+                            // Choose last 11 bits
+                            let value_lsb: u16 = (value & 0x00_00_07_FF) as u16;
+
+                            if value_lsb as i32 != value && value_lsb as i32 != -value {
+                                let error = format!("The value in line {} can't fit into the 11b of an immediate value.", real_line_number).red().to_string();
+                                eprintln!("{}", error);
+                                exit(105);
+                            }
+
+                            let sign_bit_offset = 12;
+                            let negative_prefix = (value.is_negative() as u16) << sign_bit_offset;
+
+                            let immediate_value = value_lsb | negative_prefix;
+                            args.push(Immediate(immediate_value));
                         }
-
-                        let sign_bit_offset = 12;
-                        let negative_prefix = (value.is_negative() as u16) << sign_bit_offset;
-
-                        let immediate_value = value_lsb | negative_prefix;
-                        args.push(Immediate(immediate_value));
                         continue;
                     }
 
@@ -184,7 +192,7 @@ mod tests {
 
 
         let input_code: Vec<(Vec<String>, LineKind)> = vec![
-            (vec!["adrp".to_string(), "x0".to_string(), "@DATA".to_string()], LineKind::Code(true)),
+            (vec!["adrp".to_string(), "x0".to_string(), "2048".to_string()], LineKind::Code(false)),
             (vec!["add".to_string(), "x0".to_string(), "0".to_string()], LineKind::Code(false)),
             (vec!["Hi".to_string()], LineKind::ASCII)
         ];
@@ -201,7 +209,7 @@ mod tests {
         };
 
         let expected_output_code: Vec<Line> = vec![
-            Line::Instruction("adrp".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Global("@DATA".to_string())]),
+            Line::Instruction("adrp".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(0x1001)]),
             Line::Instruction("add".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(0)]),
             Line::ASCII("Hi".to_string()),
         ];

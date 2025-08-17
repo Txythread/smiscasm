@@ -1,6 +1,6 @@
-**smiscasm - Stupid Mixed Instruction Set Computer Assembly**
+**smiscasm - Stupid Mixed Instruction Set Computer Assembler**
 
-Assembles smisc assembly code to something smiscld can link to an actual binary.
+Assembles and links SMISC assembly code.
 
 **Options:**
 * `--generate-instruction-table`:

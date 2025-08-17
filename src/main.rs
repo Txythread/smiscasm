@@ -47,7 +47,7 @@ impl Debug for ArgumentList{
 
 impl PartialEq for ArgumentList{
     fn eq(&self, other: &Self) -> bool{
-        self.file == other.file && self.help == other.help
+        self.file == other.file && self.help == other.help && self.generate_instruction_table == other.generate_instruction_table && self.output_name == other.output_name
     }
 }
 

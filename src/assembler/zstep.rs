@@ -1,5 +1,6 @@
 use std::process::exit;
 use colorize::AnsiColor;
+use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::assembler::ya_tokenizer::{InstructionArgs, Line, YATokenizerResult};
 use crate::instruction::instruction::*;
 
@@ -9,55 +10,46 @@ use crate::instruction::instruction::*;
 // And it's alphabetically.
 // The Z represents 'last'
 
-pub fn perform_last_name(input: YATokenizerResult, instructions: Vec<Instruction>) -> Vec<u8> {
+pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction>) -> Vec<u8> {
     let mut result: Vec<u8> = Vec::new();
+    let mut next_page_start = MEMORY_PAGE_SIZE;
+    let mut section_starts_in_lines = input.sections.iter().map(|x| x.clone().1).collect::<Vec<u32>>(); // The lines' (in the input code) indexes that belong to a new section. The first element is always the next section.
+    let mut current_section_name = input.sections.iter().nth(0).unwrap().clone().0;
+    let mut actual_bytes_written: u32 = 0; // The bytes written that were not written for memory page aligning
+    section_starts_in_lines.remove(0);
 
-    // Add the amount of sections
-    append_u16_to_vec(&mut result, input.sections.len() as u16);
-    // Add the amount of global constants
-    append_u16_to_vec(&mut result, input.global_constants.iter().filter(| &x | x.clone().get_is_global()).count() as u16);
-
-    // Add all the sections
-    for section in input.sections.iter() {
-        let name = section.clone().0;
-        let start = section.clone().1;
-
-        append_ascii_string_to_vec(&mut result, name);
-        append_u8_to_vec(&mut result, 0xfa);
-        append_u32_to_vec(&mut result, start);
-        append_u8_to_vec(&mut result, 0xfb);
-    }
-
-    // Add all the constants
-    for global in input.global_constants.iter() {
-        if !global.get_is_global() { continue; }
-
-        let name = global.clone().get_name().clone();
-        let value = global.clone().get_value();
-
-        append_ascii_string_to_vec(&mut result, name);
-        append_u8_to_vec(&mut result, 0xfa);
-        if let Some(value) = value.parse::<i32>().ok() {
-            append_u32_to_vec(&mut result, value as u32);
-        }else{
-            append_ascii_string_to_vec(&mut result, value.to_string());
-        }
-        append_u8_to_vec(&mut result, 0xfb);
-    }
-
-    // Add the amount of lines using a global constant
-    let lines_with_global_values = lines_with_global_values(input.code.clone());
-    append_u16_to_vec(&mut result, lines_with_global_values.len() as u16);
-
-    // Add all the lines
-    for line in lines_with_global_values.iter() {
-        append_u32_to_vec(&mut result, *line);
-    }
+    println!("Section starts: {:?}", section_starts_in_lines);
 
     // Add commands and data
     for line in input.code.iter().enumerate() {
         let i = line.0;
         let line = line.1.clone();
+
+        if let Some(next_section_start) = section_starts_in_lines.iter().nth(0){
+            let mut next_section_start = *next_section_start;
+            if actual_bytes_written == next_section_start{
+                println!("Creating new section");
+                // Look if the section was too long
+                if result.len() > next_page_start {
+                    // Too long, throw error
+                    let error = format!("Section \"{}\"", current_section_name).red().to_string();
+                    eprintln!("{}", error);
+                    exit(105);
+                }
+                // Start a new section
+                // Find the section's name
+                current_section_name = input.sections.iter().find(| &x | x.clone().1 == actual_bytes_written).unwrap().clone().0;
+                // Fill the section with 0s
+                while result.len() < next_page_start {
+                    // Push without incrementing the actual_bytes_written
+                    result.push(0);
+                }
+                // Change the next page's start
+                next_page_start += MEMORY_PAGE_SIZE;
+                // Change the section_starts_in_lines
+                section_starts_in_lines.remove(0);
+            }
+        }
 
 
         // Get real line number
@@ -142,16 +134,16 @@ pub fn perform_last_name(input: YATokenizerResult, instructions: Vec<Instruction
                 instruction_coded |= (reg1 as u32) << 13;
                 instruction_coded |= immediate as u32;
 
-                append_u32_to_vec(&mut result, instruction_coded);
+                append_u32_to_vec(&mut result, &mut actual_bytes_written, instruction_coded);
 
                 if let Some(global) = global {
-                    append_ascii_string_to_vec(&mut result, global);
-                    append_u8_to_vec(&mut result, 0xff)
+                    append_ascii_string_to_vec(&mut result, &mut actual_bytes_written, global);
+                    append_u8_to_vec(&mut result, &mut actual_bytes_written, 0xff)
                 }
             }
 
             Line::ASCII(text) => {
-                append_ascii_string_to_vec(&mut result, text.clone());
+                append_ascii_string_to_vec(&mut result, &mut actual_bytes_written, text.clone());
             }
         }
     }
@@ -187,18 +179,21 @@ fn lines_with_global_values(code: Vec<Line>) -> Vec<u32>{
     result
 }
 
-fn append_u8_to_vec(x: &mut Vec<u8>, data: u8){
+fn append_u8_to_vec(x: &mut Vec<u8>, size: &mut u32, data: u8){
     x.push(data);
+    *size += 1;
 }
 
-fn append_u16_to_vec(x: &mut Vec<u8>, data: u16) {
+#[allow(dead_code)]
+fn append_u16_to_vec(x: &mut Vec<u8>, size: &mut u32, data: u16) {
     let msb: u8 = ((data & 0xFF00) >> 8) as u8;
     let lsb: u8 = ((data & 0x00FF) >> 0) as u8;
     x.push(msb);
     x.push(lsb);
+    *size += 2;
 }
 
-fn append_u32_to_vec(x: &mut Vec<u8>, data: u32) {
+fn append_u32_to_vec(x: &mut Vec<u8>, size: &mut u32, data: u32) {
     let msb: u8 = ((data & 0xFF000000) >> 24) as u8;
     let by1: u8 = ((data & 0x00FF0000) >> 16) as u8;
     let by2: u8 = ((data & 0x0000FF00) >> 8) as u8;
@@ -207,10 +202,12 @@ fn append_u32_to_vec(x: &mut Vec<u8>, data: u32) {
     x.push(by1);
     x.push(by2);
     x.push(lsb);
+    *size += 4;
 }
 
-fn append_ascii_string_to_vec(x: &mut Vec<u8>, string: String){
+fn append_ascii_string_to_vec(x: &mut Vec<u8>, size: &mut u32, string: String){
     for char in string.chars() {
         x.push(char as u8);
     }
+    *size += string.len() as u32;
 }

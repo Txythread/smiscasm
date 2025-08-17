@@ -1,5 +1,6 @@
 use std::process::exit;
 use colorize::AnsiColor;
+use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::assembler::valuegen::ValueGenResult;
 use crate::util::replacement::Replacement;
 
@@ -113,8 +114,20 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
 
                 match arg[2].as_str() {
                     "PAGE" => {
-                        final_args.push("@".to_owned() + arg0_page);
-                        args_contain_global_constants = true;
+                        // Calculate the correct memory page
+                        let section_idx = code.sections.clone().iter().enumerate().find(| &x | x.1.clone().0 == arg0_page).map(| x | x.0);
+
+                        if section_idx.is_none() {
+                            let error = format!("Section named {} called in line {} doesn't exist.", arg0_page, real_line_number).red().to_string();
+                            eprintln!("{}", error);
+                            exit(105);
+                        }
+
+                        let section_idx = section_idx.unwrap().clone();
+                        let memory_page_start = section_idx * MEMORY_PAGE_SIZE;
+
+
+                        final_args.push(memory_page_start.to_string());
                     }
 
                     "PAGEOFF" => {
@@ -178,9 +191,9 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
 
 pub struct ValueReplResult{
     pub global_constants: Vec<Replacement>,
-    pub sections: Vec<(String, u32)>,       //Name of the section followed by the correct line (starting at 0) from the resulting code.
+    pub sections: Vec<(String, u32)>,           // Name of the section followed by the correct line (starting at 0) from the resulting code.
     pub code: Vec<(Vec<String>, LineKind)>,     // The lines of code and if they contain immediate values encoded in global constants.
-    pub line_mapping: Vec<(usize, usize)>,  // How the new line number in the resulting code above (.0) refers to the original line number (.1)
+    pub line_mapping: Vec<(usize, usize)>,      // How the new line number in the resulting code above (.0) refers to the original line number (.1)
 }
 
 #[derive(Clone)]
@@ -233,7 +246,7 @@ mod tests {
         ];
 
         let expected_output_code: Vec<(Vec<String>, LineKind)> = vec![
-            (vec!["adrp".to_string(), "x0".to_string(), "@DATA".to_string()], LineKind::Code(true)),
+            (vec!["adrp".to_string(), "x0".to_string(), "2048".to_string()], LineKind::Code(false)),
             (vec!["add".to_string(), "x0".to_string(), "0".to_string()], LineKind::Code(false)),
             (vec!["Hi".to_string()], LineKind::ASCII)
         ];
