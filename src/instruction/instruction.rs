@@ -44,7 +44,7 @@ impl Instruction {
 
     pub fn from_string(string: String) -> Instruction {
         // List of all available micro operations
-        let output_map_str: Vec<&str> = vec!["PC_OUT", "PC_IN", "PC_INC", "MEM_ADDR_PTR_IN", "ALU_IN_A", "ALU_IN_B", "CAL_REG_A_IN", "CAL_REG_B_IN", "CAL_REG_A_OUT", "CAL_REG_B_OUT", "IMMEDIATE_OUT", "INSTR_IN", "MEM_OUT", "PLUS_OUT", "RESET_MICRO", "STDTRANS_IN", "STDTRANS_OUT", "STDTRANS_SEND"]; // The left-most string in the list will end up in the LSb of the control 'word'
+        let output_map_str: Vec<&str> = vec!["PC_OUT", "PC_IN", "PC_INC", "MEM_ADDR_PTR_IN", "ALU_IN_A", "ALU_IN_B", "CAL_REG_A_IN", "CAL_REG_B_IN", "CAL_REG_A_OUT", "CAL_REG_B_OUT", "IMMEDIATE_OUT", "INSTR_IN", "MEM_OUT", "PLUS_OUT", "RESET_MICRO", "STDTRANS_IN", "STDTRANS_OUT", "STDTRANS_SEND", "ZF_IN", "ZF_OUT"]; // The left-most string in the list will end up in the LSb of the control 'word'
 
         let output_map: Vec<String> = output_map_str.into_iter().map(|s| s.to_string()).collect();
 
@@ -58,6 +58,9 @@ impl Instruction {
         let format_string = remove_comments_in_line(lines.first().unwrap().to_string()).split_whitespace().collect::<Vec<&str>>().iter().map(|s| s.to_string()).collect::<Vec<String>>();
         let mut format_vec: Vec<bool> = Vec::new();
         lines.remove(0);
+
+        let mut zero_flag = false;
+        let mut priv_flag = false;
 
         for format_expression in format_string.iter() {
             match (*format_expression).as_str() {
@@ -109,13 +112,31 @@ impl Instruction {
             if line.is_none() { continue; }
             let line = line.unwrap();
 
-            if line == "@STAGE" {
+            // TODO: Make this a switch statement
+
+            if line == "@STAGE" || line == "@VERSION"{
                 result.stages.push((call_word, current_stage_control_word));
                 current_stage_control_word = 0;
                 let mut current_stage = call_word & 0x1F; // The last five
-                current_stage += 1;
+                if line == "@STAGE"{
+                    current_stage += 1;
+                }
+                zero_flag = false;
+                priv_flag = false;
                 call_word = call_word & 0xFFE0; // remove the last five (current stage)
                 call_word = call_word | current_stage;
+                continue;
+            }
+
+            if line == "@ZF"{
+                // Just enable the "Zero Flag" bit in the call_word
+                call_word = call_word | 0x4000u16;
+                continue;
+            }
+
+            if line == "@PM" {
+                // Just enable the "Privileged Mode Flag" bit in the call_word
+                call_word = call_word | 0x8000u16;
                 continue;
             }
 
