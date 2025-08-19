@@ -1,17 +1,18 @@
 use std::process::exit;
 use colorize::*;
 
+/// Split lines into tokens
 #[allow(dead_code)]
 pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
     // The remaining spaces always start a new token, but are themselves to be ignored.
-    // '.',  '@',  ':',  '0x',  '0b', '0o'  '[',  ']',  '(',  ')',  ',',  '<',  '>',  '+',  '-',  '*',  '/',  '&'  &  '%'
+    // '.',  '@',  ':',  '0x',  '0b', '0o'  '[',  ']',  '(',  ')',  ',',  '<',  '>',  '+',   '*',  '/',  '&'  &  '%'
     // also separate strings into tokens (except when in string/char literals), but also serve as tokens themselves.
 
     let mut all_tokens: Vec<Vec<String>> = vec![];
     let mut current_line_tokens: Vec<String> = vec![];
 
     // Having more than two characters is not allowed
-    let token_markers = [".".to_string(), "@".to_string(), ":".to_string(), "0x".to_string(), "0b".to_string(), "0o".to_string(), "[".to_string(), "]".to_string(), "(".to_string(), ")".to_string(), "<".to_string(), ">".to_string(), ",".to_string(), "+".to_string(), "-".to_string(), "*".to_string(), "/".to_string(), "%".to_string(), "&".to_string()];
+    let token_markers = [".".to_string(), "@".to_string(), ":".to_string(), "0x".to_string(), "0b".to_string(), "0o".to_string(), "[".to_string(), "]".to_string(), "(".to_string(), ")".to_string(), "<".to_string(), ">".to_string(), ",".to_string(), "+".to_string(), "*".to_string(), "/".to_string(), "%".to_string(), "&".to_string()];
 
     for line in input.iter().enumerate() {
         let line_number = line.0;
@@ -97,7 +98,7 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
         }
 
         if in_string_literal {
-            let error = format!("String or character literal at line {} lacks trailing.", line_number).red().to_string();
+            let error = format!("String or character literal at line {} lacks trailing.", line_number).red();
             eprintln!("{}", error);
             exit(105);
         }

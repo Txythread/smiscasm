@@ -4,6 +4,7 @@ use crate::util::replacement::Replacement;
 use crate::util::math::resolve_string;
 use colorize::*;
 
+/// Find global constant declarations and labels (function definitions) in code and separate them.
 #[allow(dead_code)]
 pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
     let mut result = ValueGenResult{ constants: vec![], sections: vec![], code: vec![], line_mapping: vec![] };
@@ -236,7 +237,6 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
     result
 }
 
-#[allow(dead_code)]
 pub struct ValueGenResult{
     pub constants: Vec<Replacement>,
     pub sections: Vec<(String, u32)>, //Name of the section followed by the correct line (starting at 0) from the resulting code.

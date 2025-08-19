@@ -107,8 +107,6 @@ impl Instruction {
             if line.is_none() { continue; }
             let line = line.unwrap();
 
-            // TODO: Make this a switch statement
-
             match line {
                 "@STAGE" | "@VERSION" => {
                     result.stages.push((call_word, current_stage_control_word));

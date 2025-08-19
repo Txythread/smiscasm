@@ -1,4 +1,4 @@
-jmp # NAME
+jmpz # NAME
 x x # register, immediate value
 D3 # 0xA0 is the commands representation in the OP-CODE
 

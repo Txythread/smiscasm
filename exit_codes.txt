@@ -5,4 +5,5 @@ x00	Bad argument
 x03	Bad implicit input file (like instruction files, configs, (probably an internal issue; sorry))
 x04	Read/Write Error
 x05	Bad Input Code
+x98	Other
 x99	Internal Error (sorry)

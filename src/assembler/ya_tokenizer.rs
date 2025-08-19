@@ -54,7 +54,6 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
                             let value = value >> 11; // Ignore the last bits
 
                             let immediate_value = (value as u16 & 0x7FF)| 0x1000;
-                            println!("Pushing immediate value (PAGE): {} or in binary: {:b}", immediate_value, immediate_value);
                             args.push(Immediate(immediate_value))
                         }else {
                             // Correct the format

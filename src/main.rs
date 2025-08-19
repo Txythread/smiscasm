@@ -53,7 +53,8 @@ impl PartialEq for ArgumentList{
 }
 
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // Retrieve arguments from the terminal first
     let cli_args: Vec<String> = env::args().collect();
 
@@ -66,12 +67,15 @@ fn main() {
 
     if args.get_micro_operation.is_some() { get_micro_operation(args.get_micro_operation.unwrap().to_string()); return;}
 
+    // There is something to assemble
+
     // Load the instructions
     let instructions = instruction::instruction::get_all_instructions();
 
     // Load the file
     let path = expand_path(&args.file.clone().unwrap()).unwrap();
     let input_file = fs::read_to_string(path.clone());
+
 
     if input_file.is_err() {
         let msg = format!("Input file not found: {}", path.to_str().unwrap().to_string()).red().to_string();
@@ -81,7 +85,20 @@ fn main() {
 
     let input_file = input_file.unwrap();
 
-    let binary = assemble(input_file, instructions);
+    // Check the file is in the same dir
+
+    // The amount of dirs between PWD and file
+    let amount_of_subdirs = path.to_str().unwrap().split('/').count() - 1;
+
+    if amount_of_subdirs > 0 {
+        let msg = format!("Input file must be directly beneath the working directory, but there are {} directories in between.", amount_of_subdirs).red().to_string();
+        eprintln!("{}", msg);
+        exit(100);
+    }
+
+
+
+    let binary = assemble(input_file, instructions).await;
 
     // Generate the output file name in case it doesn't exist.
     if args.output_name.is_none(){

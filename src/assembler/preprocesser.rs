@@ -13,8 +13,9 @@ pub fn preprocess(code: String) -> Vec<String> {
         let mut line_without_comment: String = String::new();
 
         for char in line.chars(){
-            if char == '#' { break; }
+            if char == '#' { /*Comment starts here*/ break; }
 
+            // Char not part of a comment
             line_without_comment.push(char);
         }
 

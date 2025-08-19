@@ -10,6 +10,7 @@ use crate::instruction::instruction::*;
 // And it's alphabetically.
 // The Z represents 'last'
 
+/// Turns YATokenizerResult into the final binary
 pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction>) -> Vec<u8> {
     let mut result: Vec<u8> = Vec::new();
     let mut next_page_start = MEMORY_PAGE_SIZE;
@@ -23,6 +24,7 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
         let i = line.0;
         let line = line.1.clone();
 
+        // Check if the start of the next section is at the current byte
         if let Some(next_section_start) = section_starts_in_lines.iter().nth(0){
             let next_section_start = *next_section_start;
             if actual_bytes_written == next_section_start{
@@ -60,12 +62,15 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
 
         let real_line_number = real_line_number.unwrap().1;
 
-
+        // Actually convert & add instructions & data to binary.
         match line {
             Line::Instruction(name, args) => {
                 let name = name.clone();
                 let args = args.clone();
 
+                // The format of the instruction
+                // 0 means register and 1 means immediate value
+                // This is to keep instructions with multiple versions (e.g. add reg, reg; add reg, imm) apart
                 let mut format: Vec<bool> = Vec::new();
 
                 for arg in args.iter() {
@@ -81,13 +86,19 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
 
                 if instruction.is_none(){
                     let mut error = format!("Instruction '{}' from line {} with format (", name, real_line_number).to_string();
+                    let mut error_format_string = String::new();
                     for format in format.iter() {
+                        // If there is something in the format string already, print a colon
+                        if error_format_string != String::new(){
+                            error_format_string.push_str(", ");
+                        }
                         if *format {
-                            error += ", Immediate Value";
+                            error_format_string += "Immediate Value";
                         } else {
-                            error += "Register";
+                            error_format_string += "Register";
                         }
                     }
+                    error += error_format_string.as_str();
                     error += ") doesn't exist.";
                     error = error.red().to_string();
                     eprintln!("{}", error);
