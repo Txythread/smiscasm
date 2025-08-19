@@ -115,7 +115,7 @@ impl Instruction {
                     if line == "@STAGE"{
                         current_stage += 1;
                     }
-                    call_word = call_word & 0xFFE0; // remove the last five (current stage)
+                    call_word = call_word & 0x3FE0; // remove the last five (current stage) & the first two (flags)
                     call_word = call_word | current_stage;
                 }
 
