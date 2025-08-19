@@ -82,4 +82,4 @@ To run *smiscasm* with its standard functionality (assembling & linking), just r
 You can take a look at exit_codes.txt to see what all the exit codes (except for 0) mean. This only includes intentional exit codes, not Rust's 101.
 
 ## Further Info
-Check out the code for more. Some instructions are documented, some not really tbh.
+Run smiscasm with the `--help` flag for more info on flags. Also check out the code & instructions for more. Some instructions are documented, some not really tbh.
