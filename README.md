@@ -15,7 +15,7 @@ Please note that **some names are reserved** as they refer to assembler commands
 
 In code, you can use a previously defined constant just by calling its name. It'll be turned into a regular immediate value during compile time.
 
-### [Globals]
+### Globals
 ***Globals are currently of no use and SHOULD BE AVOIDED***
 ... but if you want to you can make a constant by writing `.global <constant name>` after it has been defined.
 
