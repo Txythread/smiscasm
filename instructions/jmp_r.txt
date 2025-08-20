@@ -1,18 +1,16 @@
-jmp # NAME
+jmp
 x
 D1 
 
-# Load the next address into the memory address pointer
 PC_OUT
 MEM_ADDR_PTR_IN
 
-@STAGE	# Load the instruction into the instruction register, increment the program counter by 4B
+@STAGE
 PC_INC
 MEM_OUT
 INSTR_IN
-# Please note that up to now, THIS IS NOT THE CORRECT INSTRUCTION, as the loading stage always comes from the last instruction, this will, however, be exected until this stage in the next round.
 
 @STAGE
-CAL_REG_A_OUT # The addressed ('called') register from the first argument
+CAL_REG_A_OUT
 PC_IN
-RESET_MICRO # go back to zero to load the next instruction
+RESET_MICRO

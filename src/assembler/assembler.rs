@@ -7,7 +7,8 @@ use crate::assembler::ya_tokenizer::{tokenize_ya_time, YATokenizerResult};
 use crate::assembler::zstep::perform_last_step;
 use crate::instruction::instruction::Instruction;
 
-pub const MEMORY_PAGE_SIZE: usize = 2048;
+/// The size of the memory page and the max size for immediate values.
+pub const MEMORY_PAGE_SIZE: usize = 4096;
 
 /// Links & assembles code given an instruction set
 pub async fn assemble(code: String, instructions: Vec<Instruction>) -> Vec<u8> {

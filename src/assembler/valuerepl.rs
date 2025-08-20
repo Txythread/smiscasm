@@ -259,7 +259,7 @@ mod tests {
         ];
 
         let expected_output_code: Vec<(Vec<String>, LineKind)> = vec![
-            (vec!["adrp".to_string(), "x0".to_string(), "2048".to_string()], LineKind::Code(false)),
+            (vec!["adrp".to_string(), "x0".to_string(), "4096".to_string()], LineKind::Code(false)),
             (vec!["add".to_string(), "x0".to_string(), "0".to_string()], LineKind::Code(false)),
             (vec!["Hi".to_string()], LineKind::ASCII)
         ];

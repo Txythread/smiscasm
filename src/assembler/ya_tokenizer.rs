@@ -1,5 +1,6 @@
 use std::process::exit;
 use colorize::AnsiColor;
+use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::util::replacement::Replacement;
 use crate::assembler::valuerepl::{LineKind, ValueReplResult};
 use crate::assembler::ya_tokenizer::InstructionArgs::{Global, Immediate, Register};
@@ -50,26 +51,19 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
                 for token in code[1..].iter() {
                     // If it can be passed immediately, it's just an immediate value.
                     if let Some(value) = token.parse::<i32>().ok(){
-                        if value % 2048 == 0 && value != 0{
-                            let value = value >> 11; // Ignore the last bits
-
-                            let immediate_value = (value as u16 & 0x7FF)| 0x1000;
-                            args.push(Immediate(immediate_value))
+                        if value.abs() > MEMORY_PAGE_SIZE as i32 {
+                            let error = format!("The value in line {} can't fit into the range of an immediate value (-{}...{})", real_line_number, MEMORY_PAGE_SIZE, MEMORY_PAGE_SIZE - 1).red().to_string();
+                            eprintln!("{}", error);
+                            exit(105);
                         }else {
                             // Correct the format
-                            // Choose last 11 bits
-                            let value_lsb: u16 = (value & 0x00_00_07_FF) as u16;
+                            // Choose last 12 bits
+                            let mut immediate_value: u16 = (value & 0x00_00_0F_FF) as u16;
 
-                            if value_lsb as i32 != value && value_lsb as i32 != -value {
-                                let error = format!("The value in line {} can't fit into the 11b of an immediate value.", real_line_number).red().to_string();
-                                eprintln!("{}", error);
-                                exit(105);
+                            if value.is_negative() {
+                                immediate_value = immediate_value | 0x00_00_10_00;
                             }
 
-                            let sign_bit_offset = 12;
-                            let negative_prefix = (value.is_negative() as u16) << sign_bit_offset;
-
-                            let immediate_value = value_lsb | negative_prefix;
                             args.push(Immediate(immediate_value));
                         }
                         continue;
@@ -208,7 +202,7 @@ mod tests {
         };
 
         let expected_output_code: Vec<Line> = vec![
-            Line::Instruction("adrp".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(0x1001)]),
+            Line::Instruction("adrp".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(2048)]),
             Line::Instruction("add".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(0)]),
             Line::ASCII("Hi".to_string()),
         ];

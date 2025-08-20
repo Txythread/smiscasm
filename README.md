@@ -32,13 +32,13 @@ Though it currently has almost no effect, please name pages appropriately, commo
 
 
 ### Memory Pages
-Memory Pages are 2048B in SMISC. To address a memory page, use label_in_said_page@PAGE. To access the offset of that label within that page, use the @PAGEOFF modifier instead.
+Memory Pages are 4096B in SMISC. To address a memory page, use label_in_said_page@PAGE. To access the offset of that label within that page, use the @PAGEOFF modifier instead.
 
 ### Registers
 There are 32 regs called x<sub>n</sub> where n is between 0 and 31.
 
 ### Immediate Values
-Immediate values are coded with **11b** (0...2047), 1 additional bit infront of that that marks shift-by-11 & one more additional bit in front of that one that accounts for the **sign** (everything is coded using two's complement). An immediate value can be coded decimal, hexadecimal (when starting with 0x), octal (0o) or binary (0b).
+Immediate values are coded with **12b** (0...4096), 1 additional bit infront of that that represents the **sign** (everything is coded using two's complement). In assembly, an immediate value can be coded decimal, hexadecimal (when starting with 0x), octal (0o) or binary (0b).
 
 ### Labels
 Labels (or functions) start with their name followed by a colon. They can later be **used like a constant**, but they refer to their position in bytes instead of a user-set value.  
