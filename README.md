@@ -1,12 +1,11 @@
-# smiscasm
-
+# SMISCasm - Stupid Mixed Instruction Set Computer Assembly
 
 ## Introduction
 This project serves as an assembler and a linker for my SMISC (Stupid Mixed Insruction Set Computer) assembly language.
 This language only serves one purpose: easy to implement (physically) while still allowing for complex instructions.
 
-## Assembly basics
-### Constants
+## Assembly Basics
+### <span id="ab-constants">Constants</span>
 In this assembly language, constants are defined with a simple `.`, immediately followed by the constant's name and its value:  
 
 ```.abc 10```  
@@ -16,7 +15,7 @@ Please note that **some names are reserved** as they refer to assembler commands
 
 In code, you can use a previously defined constant just by calling its name. It'll be turned into a regular immediate value during compile time.
 
-### Globals
+### [Globals]
 ***Globals are currently of no use and SHOULD BE AVOIDED***
 ... but if you want to you can make a constant by writing `.global <constant name>` after it has been defined.
 
@@ -74,12 +73,26 @@ Make sure you are in an empty directory before executing the command as it clutt
 
 You can generate them with the `--generate-instruction-table` flag.
 
+## Building
+First, clone the repo using:  
+`git clone https://github.com/Txythread/smiscasm`  
+
+Once the download finishes, build it using *production.sh*.  
+`cd smiscasm`  
+`./production.sh`
+
+This might take a while depending on your CPU and you might be asked to **enter your password** this is for moving the binary into */bin* only.  
+In case you don't trust the script, just stop once you're getting asked and run `sudo mv target/debug/smiscasm /usr/local/bin` yourself.
+
+
 ## Actually Compiling
 To run *smiscasm* with its standard functionality (assembling & linking), just run:  
 ```smiscasm my_code.s```
 
 ## Exit Codes
-You can take a look at exit_codes.txt to see what all the exit codes (except for 0) mean. This only includes intentional exit codes, not Rust's 101.
+You can take a look at exit_codes.txt to see what all the exit codes (except for 0) mean. This includes intentional exit codes only, not Rust's 101.
 
 ## Further Info
-Run smiscasm with the `--help` flag for more info on flags. Also check out the code & instructions for more. Some instructions are documented, some not really tbh.
+Run smiscasm with the `--help` flag for more info.  
+You can also use help with other flags to get help for those flags (like `smiscasm --help --generate-instruction-table`).  
+The `--instruction-help` command can give info on specific assembly instructions (like `smiscasm --instruction-help add`).
