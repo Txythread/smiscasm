@@ -7,7 +7,7 @@ use colorize;
 use colorize::AnsiColor;
 use crate::instruction::instruction::{Instruction, micro_operation_at};
 use crate::assembler::assembler::assemble;
-use crate::help::help::print_help;
+use crate::help::help::{print_help, print_instruction_help};
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -18,7 +18,8 @@ mod help;
 
 pub struct ArgumentList{
     pub file: Option<String>,
-    pub help: bool,                             // -t or --test
+    pub help: bool,                             // -h or --help
+    pub instruction_help: Option<String>,       // --instruction-help
     pub output_name: Option<String>,            // -o or --output
     pub get_micro_operation: Option<String>,    // --get-micro-operation
     pub generate_instruction_table: bool,       // --generate-instructions-table
@@ -26,12 +27,12 @@ pub struct ArgumentList{
 
 impl ArgumentList{
     pub fn new() -> ArgumentList{
-        ArgumentList{file: None, help: false, output_name: None, generate_instruction_table: false, get_micro_operation: None}
+        ArgumentList{file: None, help: false, instruction_help: None, output_name: None, generate_instruction_table: false, get_micro_operation: None}
     }
 
     /// Checks whether the current amount of data is enough (0) or the file name is missing (1)
     pub fn needs_input_file(&self) -> bool{
-        let is_ok = self.help || self.generate_instruction_table || self.file.is_some() || self.get_micro_operation.is_some();
+        let is_ok = self.help || self.generate_instruction_table || self.file.is_some() || self.get_micro_operation.is_some() || self.instruction_help.is_some();
         !is_ok
     }
 }
@@ -61,9 +62,11 @@ async fn main() {
     // Generate a reasonable argument list
     let mut args = get_arguments_from_list(cli_args);
 
-    if args.generate_instruction_table { generate_instruction_table(); return; }
+    if args.help { print_help(args); return; }
 
-    if args.help { print_help(); return; }
+    if args.instruction_help.is_some() { print_instruction_help(args.instruction_help.unwrap()); return; }
+
+    if args.generate_instruction_table { generate_instruction_table(); return; }
 
     if args.get_micro_operation.is_some() { get_micro_operation(args.get_micro_operation.unwrap().to_string()); return;}
 
@@ -270,6 +273,11 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
             if let Some(flag) = current_flag.clone(){
                 let value = arg.clone();
 
+                // Add it if it is not a call for help
+                if value == "--help" || value == "-h" {
+                    result.help = true;
+                }
+
                 match flag.as_str() {
                     "-o" | "--output" => {
                         result.output_name = Some(value);
@@ -277,6 +285,10 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
 
                     "--get-micro-operation" => {
                         result.get_micro_operation = Some(value);
+                    }
+
+                    "--instruction-help" => {
+                        result.instruction_help = Some(value);
                     }
 
                     _=>{
@@ -325,10 +337,33 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
         }
     }
 
-    if current_flag.is_some(){
+    if current_flag.is_some() && !result.help {
         let error = "All flags that act like parameters must have their second part provided.".red().to_string();
         eprintln!("{}", error);
         exit(100);
+    }
+
+    if current_flag.is_some() {
+        // Set the argument anyway as help is requested.
+        match current_flag.clone().unwrap().as_str() {
+            "-o" | "--output" => {
+                result.output_name = Some("".to_string());
+            }
+
+            "--get-micro-operation" => {
+                result.get_micro_operation = Some("".to_string());
+            }
+
+            "--instruction-help" => {
+                result.instruction_help = Some("".to_string());
+            }
+
+            _=>{
+                let error = format!("Unknown flag {}.", current_flag.unwrap()).red().to_string();
+                eprintln!("{}", error);
+                exit(100)
+            }
+        }
     }
 
     if result.needs_input_file(){

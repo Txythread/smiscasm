@@ -152,6 +152,9 @@ impl Instruction {
 }
 
 pub fn micro_operation_at(idx: usize) -> String {
+    if idx >= OUTPUT_MAP_STRING.len() {
+        return "OUT OF RANGE".to_string();
+    }
     OUTPUT_MAP_STRING[idx].to_string()
 }
 

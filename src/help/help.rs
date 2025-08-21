@@ -1,7 +1,56 @@
+use std::process::exit;
+// Termimad is for Markdown formatting in the terminal.
 use termimad;
-const HELP_STRING: &str = include_str!("help.md");
+use include_dir::{include_dir, Dir};
+use termimad::crossterm::style::Stylize;
+use crate::ArgumentList;
 
-pub fn print_help() {
-    // Termimad is for Markdown formatting in the terminal.
+const HELP_STRING: &str = include_str!("help.md");
+const COMMAND_HELP_FILES: Dir = include_dir!("$CARGO_MANIFEST_DIR/src/help/commands");
+const INSTRUCTION_HELP_FILES: Dir = include_dir!("$CARGO_MANIFEST_DIR/src/help/instructions");
+
+
+pub fn print_help(arguments: ArgumentList) {
+    if arguments.generate_instruction_table{
+        print_help_file("generate-instruction-table".to_string());
+        return;
+    }
+
+    if arguments.get_micro_operation.is_some() {
+        print_help_file("get-micro-operation".to_string());
+        return;
+    }
+
+    if arguments.instruction_help.is_some() {
+        print_help_file("instruction-help".to_string());
+        return;
+    }
+
+    if arguments.output_name.is_some() {
+        print_help_file("output".to_string());
+    }
+
     println!("{}", termimad::inline(HELP_STRING));
+}
+
+pub fn print_instruction_help(named: String){
+    if let Some(contents) = INSTRUCTION_HELP_FILES.get_file(named.clone() + ".md"){
+        println!("{}", termimad::inline(contents.contents_utf8().unwrap()));
+    }else{
+        let msg = format!("There is no helpfile for an instruction named {}.", named).red();
+        eprintln!("{}", msg);
+        exit(100);
+    }
+}
+
+fn print_help_file(name: String) {
+    let contents = COMMAND_HELP_FILES.get_file(format!("{}.md", name));
+
+    if let Some(contents) = contents {
+        println!("{}", termimad::inline(contents.contents_utf8().unwrap()));
+    }else{
+        let msg = format!("Tried to open help file commands/{}, but failed.", name).red();
+        eprintln!("{}", msg);
+        exit(199);
+    }
 }
