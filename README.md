@@ -5,7 +5,7 @@ This project serves as an assembler and a linker for my SMISC (Stupid Mixed Insr
 This language only serves one purpose: easy to implement (physically) while still allowing for complex instructions.
 
 ## Assembly Basics
-### <span id="ab-constants">Constants</span>
+### Constants
 In this assembly language, constants are defined with a simple `.`, immediately followed by the constant's name and its value:  
 
 ```.abc 10```  
@@ -70,6 +70,7 @@ Instructions must be stored in the instructions directory (as they are included 
 ## Generating Instruction Tables
 Instruction tables contain data to write to EEPROMs or flash chips (or any persistent storage for that matter) from the CPU's CU to decode the commands.
 Make sure you are in an empty directory before executing the command as it clutters the PWD.
+This command gets invoked by `smiscvm` (during the build process), too.
 
 You can generate them with the `--generate-instruction-table` flag.
 

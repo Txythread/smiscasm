@@ -1,4 +1,4 @@
-**`mov` - Moves values into registers
+**`mov` - Moves values into registers**
 
 Moves either another register's value or an immediate value into the register at the first argument.  
 Example Usage:  
