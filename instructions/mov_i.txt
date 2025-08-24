@@ -2,6 +2,7 @@ mov
 x i
 C0
 
+@STAGE
 PC_OUT
 MEM_ADDR_PTR_IN
 

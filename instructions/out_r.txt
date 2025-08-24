@@ -2,6 +2,7 @@ out
 x
 B2
 
+@STAGE
 PC_OUT
 MEM_ADDR_PTR_IN
 

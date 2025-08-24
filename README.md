@@ -47,7 +47,7 @@ Labels (or functions) start with their name followed by a colon. They can later 
 
 ### Instructions
 An instruction is coded using its name followed by its arguments (each seperated with a comma).
-Their might be an indent before and after the instruction.
+There might be an indent before and after the instruction.
 Example instruction:  
 
 ```add x1, 5```
@@ -65,6 +65,7 @@ Instructions must be stored in the instructions directory (as they are included 
 * The first line is the instruction's name as it's called in the code.
 * The second line is the format (such as (Register, Immediate Value) or (Register, Register) or () (None)). A x means a register, an i means an immediate value. * * Multiple functions with the same name but different formats can co-exist.
 * The third line is the address (only 8 bits). Please make sure it's unique.
+* Then (, after a recommended empty line, ) add the @STAGE command to get from stage 0 (which should be empty usually) to stage 1.
 * The following lines are just micro instructions. All the ones defined in `src/instruction/instruction.rs/OUTPUT_MAP_STRING` can be used for this and new ones can be added there. Seperate stages (for different clockcycles are defined with the @STAGE command. New versions of the same stage are defined with @VERSION. @ZF (zero flag) or @PM (privileged mode) can be used to make that version only apply when those flags are set.
 
 ## Generating Instruction Tables
@@ -91,7 +92,19 @@ To run *smiscasm* with its standard functionality (assembling & linking), just r
 ```smiscasm my_code.s```
 
 ## Exit Codes
-You can take a look at exit_codes.txt to see what all the exit codes (except for 0) mean. This includes intentional exit codes only, not Rust's 101.
+`smiscasm` has seperate exit codes for different kinds of errors.  
+Additionally, rusts typical *101* might also appear (in which case, try rebuilding using *production.sh* in case you used *build.sh* previously, not at all guarenteed to work though).
+
+| CODE | KIND        | DESCRIPTION                                                               |  
+|------|-------------|---------------------------------------------------------------------------|  
+| x00  | Arguments   | An input argument you wrote before execution is faulty                    |
+| x03  | Input Files | An **implicit** input file (config file, instructions, etc.) is faulty    |
+| x04  | Read/Write  | A file couldn't be opened/written. Check space left on disk & permissions |
+| x05  | Input Code  | The code that should be assembled contains an error                       |
+| x98  | Other       | Uncategorized error                                                       |
+| x99  | Internal    | Internal issue; sorry. Please file a report                               |
+
+The x means 1...9, usually it'll be a **1**. The other numbers are only there for debugging in case one issue might arise from different points in the code.
 
 ## Further Info
 Run smiscasm with the `--help` flag for more info.  

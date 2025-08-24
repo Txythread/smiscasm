@@ -2,6 +2,7 @@ hlt
 # nothing
 FA
 
+@STAGE
 RESET_MICRO
 
 @STAGE

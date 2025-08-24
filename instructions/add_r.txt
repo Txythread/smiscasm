@@ -2,7 +2,7 @@ add # NAME
 x x # register, register
 A1 # 0xA1 is the commands representation in the OP-CODE
 
-# Load the next address into the memory address pointer
+@STAGE# Load the next address into the memory address pointer
 PC_OUT
 MEM_ADDR_PTR_IN
 

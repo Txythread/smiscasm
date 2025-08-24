@@ -2,6 +2,7 @@ jmpz
 x x
 D3
 
+@STAGE
 PC_OUT
 MEM_ADDR_PTR_IN
 

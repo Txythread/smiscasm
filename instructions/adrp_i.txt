@@ -2,6 +2,7 @@ adrp
 x i
 C2
 
+@STAGE
 PC_OUT
 MEM_ADDR_PTR_IN
 
