@@ -49,7 +49,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     }
 
                     let name = line[3].clone();
-                    let section: (String, u32) = (name, /*line_number_in_result*/bytes_count as u32);
+                    let section: (String, u32) = (name, bytes_count as u32);
                     result.sections.push(section);
                     current_section_start = bytes_count;
                 }

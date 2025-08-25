@@ -135,7 +135,9 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
                         }
 
                         let section_idx = section_idx.unwrap().clone();
-                        let memory_page_start = section_idx * MEMORY_PAGE_SIZE;
+                        let memory_page_start = section_idx/* * MEMORY_PAGE_SIZE*/;
+
+                        println!("Starts at: {}", memory_page_start);
 
 
                         final_args.push(memory_page_start.to_string());
@@ -259,7 +261,7 @@ mod tests {
         ];
 
         let expected_output_code: Vec<(Vec<String>, LineKind)> = vec![
-            (vec!["adrp".to_string(), "x0".to_string(), "4096".to_string()], LineKind::Code(false)),
+            (vec!["adrp".to_string(), "x0".to_string(), "1".to_string()], LineKind::Code(false)),
             (vec!["add".to_string(), "x0".to_string(), "0".to_string()], LineKind::Code(false)),
             (vec!["Hi".to_string()], LineKind::ASCII)
         ];

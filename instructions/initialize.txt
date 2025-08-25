@@ -1,0 +1,13 @@
+init # This instruction should not be called usually, it only exists to load the next instruction
+# no arguments, tho it wouldn't matter in the least
+00 # basically: default instruction
+
+# Actually start at step 0 for once
+PC_OUT
+MEM_ADDR_PTR_IN
+
+@STAGE	# Load the instruction into the instruction register, increment the program counter by 4B
+PC_INC
+MEM_OUT
+INSTR_IN
+RESET_MICRO
