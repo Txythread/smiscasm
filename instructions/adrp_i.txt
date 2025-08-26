@@ -1,6 +1,6 @@
 adrp
 x i
-C2
+C3
 
 @STAGE
 PC_OUT
@@ -13,5 +13,53 @@ INSTR_IN
 
 @STAGE
 IMMEDIATE_OUT
+ALU_IN_A
+
+@STAGE # left-shift 1/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 2/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 3/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 4/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 5/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 6/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 7/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 8/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 9/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 10/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 11/12
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 12/12
+LSH_OUT
 CAL_REG_A_IN
-RESET_MICRO
+RESET_MICR

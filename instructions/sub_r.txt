@@ -13,11 +13,11 @@ INSTR_IN
 # Please note that up to now, THIS IS NOT THE CORRECT INSTRUCTION, as the loading stage always comes from the last instruction, this will, however, be exected until this stage in the next round.
 
 @STAGE
-CAL_REG_B_OUT
+CAL_REG_A_OUT
 ALU_IN_A
 
 @STAGE
-CAL_REG_A_OUT # The addressed ('called') register from the first argument
+CAL_REG_B_OUT # The addressed ('called') register from the first argument
 ALU_IN_B
 
 @STAGE # Actually calculate that shit (or store it for that matter)
