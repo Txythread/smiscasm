@@ -137,9 +137,6 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
                         let section_idx = section_idx.unwrap().clone();
                         let memory_page_start = section_idx/* * MEMORY_PAGE_SIZE*/;
 
-                        println!("Starts at: {}", memory_page_start);
-
-
                         final_args.push(memory_page_start.to_string());
                     }
 
