@@ -35,6 +35,55 @@ Memory Pages are 4096B in SMISC. To address a memory page, use label_in_said_pag
 
 ### Registers
 There are 32 regs called x<sub>n</sub> where n is between 0 and 31.
+Some registers have special functionality or special naming.
+
+| NAME(S) | Description                      | Calling behaviour | VM-only |
+| ------- | -------------------------------- | ----------------- | ------- |
+| x0 | Normal | Argument, return value | No |
+| x1 | Normal | Argument, I/O | No |
+| x2 | Normal | Argument, I/O | No |
+| x3 | Normal | Argument, I/O | No |
+| x4 | Normal | Argument, I/O | No |
+| x5 | Normal | Argument, I/O | No |
+| x6 | Normal | Argument, I/O | No |
+| x7 | Normal | Argument, I/O | No |
+| x8 | Normal | No-change in function | No |
+| x9 | Normal | No-change in function | No |
+| x10 | Normal | No-change in function | No |
+| x11 | Normal | No-change in function | No |
+| x12 | Normal | No-change in function | No |
+| x13 | Normal | No-change in function | No |
+| x14 | Normal | No-change in function | No |
+| x15 | Normal | No-change in function | No |
+| x16 | Normal | Changed in function | No |
+| x17 | Normal | Changed in function | No |
+| x18 | Normal | Changed in function | No |
+| x19 | Normal | Changed in function | No |
+| x20 | Normal | Changed in function | No |
+| x21 | Normal | Changed in function | No |
+| x22 | Normal | Changed in function | No |
+| x23 | Normal | Changed in function | No |
+| x24 | Reserved | Undecided | No |
+| x25 | Reserved | Undecided | No |
+| x26 | Reserved | Undecided | No |
+| x27 | Reserved | Undecided | No |
+| x28 | Reserved | Undecided | No |
+| x29 | Reserved | Undecided | No |
+| x30 | Reserved | Undecided | No |
+| x31/sp | Stack Pointer; stores address of the lowest stack address | Reset at end | No |
+| N/A | Zero flag / Flag #1 | Changed | No |
+| N/A | Privileged Mode / Flag #2 | User specified | No |
+| N/A | Memory Address Pointer; the address the memory is loading | Changed | No |
+| N/A | Current Instruction | Changed | No |
+| N/A | Micro operation counter | Changed | No |
+| N/A | ALU arg 1; the first value of the ALU | Changed | No |
+| N/A | ALU arg 2; the second value of the ALU | Changed | No |
+| N/A | Program Counter; the address of the current/next instruction | Changed | No |
+| N/A | Standard transmitter contents; the contents the stdtrans will send when sending / has received | Changed | No |
+| N/A | Completed Clock Cycles; stored by VM for øIPC calculations | N/A | Yes |
+| N/A | Completed Instruction; stored by VM for øIPC calculations | N/A | Yes |
+| N/A | Halted; set by the vm when reset happens while op-counter contains 0 | N/A | Yes |
+
 
 ### Immediate Values
 Immediate values are coded with **12b** (0...4096), 1 additional bit infront of that that represents the **sign** (everything is coded using two's complement). In assembly, an immediate value can be coded decimal, hexadecimal (when starting with 0x), octal (0o) or binary (0b).
