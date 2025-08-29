@@ -6,5 +6,5 @@ FA
 RESET_MICRO
 
 @STAGE
-@STAGE
+@STAGE # reset because it might land here from loading this instruction via the previous instruction
 RESET_MICRO
