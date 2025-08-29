@@ -175,10 +175,16 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
             let replacement = code.constants.iter().find(| &x | x.get_name() == arg);
 
             if replacement.is_none() {
-                // The user probably misspelled.
-                let error = format!("\"{}\" in line {} is not a constant.", arg, real_line_number).red().to_string();
-                eprintln!("{}", error);
-                exit(605);
+                // Look if it's in a known list
+                match arg.as_str() {
+                    "sp" => break,
+                    _ => {
+                        // The user probably misspelled.
+                        let error = format!("\"{}\" in line {} is not a constant.", arg, real_line_number).red().to_string();
+                        eprintln!("{}", error);
+                        exit(605);
+                    }
+                }
             }
 
             let replacement = replacement.unwrap().clone();

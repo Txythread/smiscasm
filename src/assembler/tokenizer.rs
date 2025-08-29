@@ -42,6 +42,11 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
                 // Check for single-character token markers
                 if token_markers.contains(&char.to_string()) {
                     if !current_token.is_empty() {
+                        // Replace internal constants
+                        match current_token.as_str(){
+                            "sp" => { current_token = "x31".to_string() },
+                            _ => { /* Nothing to change */}
+                        }
                         current_line_tokens.push(current_token.clone());
                         current_token = String::new();
                     }
