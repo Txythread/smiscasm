@@ -1,5 +1,5 @@
 cal
-i
+x
 DA
 
 @STAGE
@@ -12,17 +12,15 @@ MEM_OUT
 INSTR_IN
 
 @STAGE
-IMMEDIATE_OUT
-ALU_IN_A
+SP_OUT
+MEM_ADDR_PTR_IN
 
 @STAGE
-CAL_REG_A_OUT # The addressed ('called') register from the first argument
-ALU_IN_B
+PC_OUT
+MEM_IN
+SP_DEC_DW
 
-@STAGE # Actually calculate that shit (or store it for that matter)
-PLUS_OUT
-CAL_REG_A_IN
-RESET_MICRO # go back to zero to load the next instruction
-
-# And yes, adding some shit to some shit takes 5 stages lol, IPC for this instruction: 0.2.
-# In fact, with the current design, 0.333 (tho this would be something like a nop) is the practical minimum for any regular instruction
+@STAGE
+CAL_REG_A_OUT
+PC_IN
+RESET_MICRO
