@@ -1,8 +1,7 @@
-use std::process::exit;
 use std::i32;
 use crate::util::replacement::Replacement;
 use crate::util::math::resolve_string;
-use colorize::*;
+use crate::util::exit::{exit, exit_with_variant, ExitCode};
 
 /// Find global constant declarations and labels (function definitions) in code and separate them.
 #[allow(dead_code)]
@@ -29,23 +28,17 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
             let command = line.iter().nth(1);
 
             if command.is_none() {
-                let error = format!("Assembler command at line {} lacks command, variable or constant name.", line_number).red().to_string();
-                eprintln!("{}", error);
-                exit(105)
+                exit(format!("Assembler command at line {} lacks command, variable or constant name.", line_number), ExitCode::BadCode);
             }
 
             match command.unwrap().as_str() {
                 "section" => {
                     if line.len() != 5 {
-                        let error = format!("Section naming at line {} can't be read.", line_number).red().to_string();
-                        eprintln!("{}", error);
-                        exit(105)
+                        exit(format!("Section naming at line {} can't be read.", line_number), ExitCode::BadCode);
                     }
 
                     if line[2] != "\"" || line[4] != "\""{
-                        let error = format!("Section naming at line {} can't be read. String expected.", line_number).red().to_string();
-                        eprintln!("{}", error);
-                        exit(105)
+                        exit(format!("Section naming at line {} can't be read. String expected.", line_number), ExitCode::BadCode);
                     }
 
                     let name = line[3].clone();
@@ -56,9 +49,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
 
                 "ascii" => {
                     if line.len() != 5{
-                        let error = format!("Ascii in line {} can't be decoded.", line_number).red().to_string();
-                        eprintln!("{}", error);
-                        exit(105)
+                        exit(format!("Ascii in line {} can't be decoded.", line_number), ExitCode::BadCode);
                     }
 
                     let first_quote = line.iter().nth(2).unwrap();
@@ -66,9 +57,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     let second_quote = line.iter().nth(4).unwrap();
 
                     if first_quote != "\"" || second_quote != "\"" {
-                        let error = format!("String expected for ASCII decoding, but no string found in line {}.", line_number).red().to_string();
-                        eprintln!("{}", error);
-                        exit(105)
+                        exit(format!("String expected for ASCII decoding, but no string found in line {}.", line_number), ExitCode::BadCode);
                     }
 
                     // Increment the byte counter
@@ -84,9 +73,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
 
                 "global" => {
                     if line.len() != 3{
-                        let error = format!("Call to global method in line {} has incorrect format.", line_number).red().to_string();
-                        eprintln!("{}", error);
-                        exit(105)
+                        exit(format!("Call to global method in line {} has incorrect format.", line_number), ExitCode::BadCode);
                     }
                     let global_variable_name = line[2].clone();
                     global_constants_names.push(global_variable_name.clone());
@@ -100,18 +87,14 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     let mut value: Option<String> = None;
 
                     if first_value_token.is_none(){
-                        let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                        eprintln!("{}", error);
-                        exit(105)
+                        exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 3);
                     }
 
                     // Try to do math operations
                     if first_value_token.unwrap() == "[" {
                         if line.iter().len() == 7{
                             if line.iter().nth(6).unwrap() != "]"{
-                                let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                                eprintln!("{}", error);
-                                exit(105)
+                                exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 4);
                             }
 
                             let math_op = vec![line.iter().nth(3).unwrap().to_string(), line.iter().nth(4).unwrap().to_string(), line.iter().nth(5).unwrap().to_string()].join(" ");
@@ -119,9 +102,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                             let result_str = resolve_string(math_op, constants);
 
                             if result_str == "" {
-                                let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                                eprintln!("{}", error);
-                                exit(605)
+                                exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 5);
                             }
 
                             value = Some(result_str);
@@ -135,9 +116,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                             if let Some(value_i32) = value_token.parse::<i32>().ok(){
                                 value = Some(value_i32.to_string());
                             } else {
-                                let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                                eprintln!("{}", error);
-                                exit(205)
+                                exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 5);
                             }
                         } else if line.iter().len() == 4 {
                             let prefix = line.iter().nth(2).unwrap();
@@ -148,9 +127,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 16).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                                        eprintln!("{}", error);
-                                        exit(205)
+                                        exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 6);
                                     }
                                 }
 
@@ -158,9 +135,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 8).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                                        eprintln!("{}", error);
-                                        exit(205)
+                                        exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 7);
                                     }
                                 }
 
@@ -168,22 +143,16 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 2).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                                        eprintln!("{}", error);
-                                        exit(205)
+                                        exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 8);
                                     }
                                 }
 
                                 _ => {
-                                    let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                                    eprintln!("{}", error);
-                                    exit(405)
+                                    exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 9);
                                 }
                             }
                         } else {
-                            let error = format!("Value of line {} can't be decoded.", line_number).red().to_string();
-                            eprintln!("{}", error);
-                            exit(305)
+                            exit_with_variant(format!("Value of line {} can't be decoded.", line_number), ExitCode::BadCode, 1);
                         }
                     }
 

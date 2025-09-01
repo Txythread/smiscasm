@@ -1,12 +1,12 @@
 use std::error;
 use std::fs::*;
 use std::io::Write;
-use std::process::exit;
 use std::string::ToString;
 use colorize::AnsiColor;
 use reqwest::get;
 use url::Url;
 use crate::expand_path;
+use crate::util::exit::{exit, ExitCode};
 
 const KNOWN_PUBLIC_LIBS: [(&str, &str, &str); 2] = [
     //  NAME                DOWNLOAD ADDRESS                                                                            FILE NAME
@@ -60,9 +60,7 @@ pub async fn perform_inclusions(code: String) -> String {
         // Doesn't exist
         // Make sure pub-libs exists
         if create_dir_all(PUBLIC_LIBS_DIR).is_err() {
-            let error = "Couldn't create public libraries directory to store public libraries in.".red();
-            eprintln!("{}", error);
-            exit(104)
+            exit("Couldn't create public libraries directory to store public libraries in.".to_string(), ExitCode::ReadWriteError);
         }
 
         // Try to download the URL
@@ -99,9 +97,7 @@ pub async fn perform_inclusions(code: String) -> String {
 
 
         // No include option worked -> throw error
-        let error = format!("Couldn't find dependency {}.", inclusion_argument).red();
-        eprintln!("{}", error);
-        exit(398)
+        exit(format!("Couldn't find dependency {}.", inclusion_argument), ExitCode::Other);
     }
 
     let mut code = result.join("\n");
@@ -141,23 +137,17 @@ async fn attempt_download(line: String, file_name: String, download_name: String
                     return Some(file_contents);
                 } else {
                     print_failed();
-                    let error = "Download of dependency failed, are you in the same dir as the file to assemble?".red();
-                    eprintln!("{}", error);
-                    exit(298)
+                    exit("Download of dependency failed, are you in the same dir as the file to assemble?".to_string(), ExitCode::Other);
                 }
             } else {
                 print_failed();
-                let error = "Download of dependency failed, are you in the same dir as the file to assemble? Are you connected to the internet?".red();
-                eprintln!("{}", error);
-                exit(198)
+                exit("Download of dependency failed, are you in the same dir as the file to assemble? Are you connected to the internet?".to_string(), ExitCode::Other);
             }
         }
 
         // Download failed
         print_failed();
-        let error = format!("Download of dependency {} failed.\nAre you in the same dir as the file to assemble?\nAre you connected to the internet?", line).red();
-        eprintln!("{}", error);
-        exit(398)
+        exit(format!("Download of dependency {} failed.\nAre you in the same dir as the file to assemble?\nAre you connected to the internet?", line).to_string(), ExitCode::Other);
     }
 
     None

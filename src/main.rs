@@ -1,15 +1,13 @@
 use std::env;
 use std::fmt::{Debug, Formatter};
-use std::process::exit;
 use std::fs;
 use std::path::PathBuf;
-use colorize;
-use colorize::AnsiColor;
 use crate::instruction::instruction::{Instruction, micro_operation_at};
 use crate::assembler::assembler::assemble;
 use crate::help::help::{print_help, print_instruction_help};
 use std::fs::File;
 use std::io::prelude::*;
+use crate::util::exit::{exit, ExitCode};
 
 mod util;
 mod instruction;
@@ -81,9 +79,7 @@ async fn main() {
 
 
     if input_file.is_err() {
-        let msg = format!("Input file not found: {}", path.to_str().unwrap().to_string()).red().to_string();
-        eprintln!("{}", msg);
-        exit(100);
+        exit(format!("Input file not found: {}", path.to_str().unwrap().to_string()), ExitCode::BadArgument);
     }
 
     let input_file = input_file.unwrap();
@@ -94,9 +90,7 @@ async fn main() {
     let amount_of_subdirs = path.to_str().unwrap().split('/').count() - 1;
 
     if amount_of_subdirs > 0 {
-        let msg = format!("Input file must be directly beneath the working directory, but there are {} directories in between.", amount_of_subdirs).red().to_string();
-        eprintln!("{}", msg);
-        exit(100);
+        exit(format!("Input file must be directly beneath the working directory, but there are {} directories in between.", amount_of_subdirs), ExitCode::BadArgument);
     }
 
 
@@ -118,8 +112,7 @@ fn get_micro_operation(idx: String) {
     let idx_int = idx.parse::<usize>();
 
     if idx_int.is_err() {
-        eprintln!("String \"{}\" is not a valid Micro Operation idx.", idx);
-        exit(104);
+        exit(format!("String \"{}\" is not a valid Micro Operation idx.", idx), ExitCode::BadArgument);
     }
 
     println!("That would be: {}", micro_operation_at(idx_int.unwrap()));
@@ -197,9 +190,7 @@ fn generate_instruction_table() {
     let file8 = File::create("smiscasm_instructions-8-LSB.o");
 
     if file1.is_err() || file2.is_err() || file3.is_err() || file4.is_err() || file5.is_err() || file6.is_err() || file7.is_err() || file8.is_err(){
-        let error = "Couldn't create file 'smiscasm_instructions-x.o' to store instructions in.".red().to_string();
-        eprintln!("{}", error);
-        exit(104);
+        exit("Couldn't create file 'smiscasm_instructions-x.o' to store instructions in.".to_string(), ExitCode::ReadWriteError);
     }
 
     // Convert the list of u64 to a list of u8.
@@ -292,9 +283,7 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
                     }
 
                     _=>{
-                        let error = format!("Unknown flag {}.", flag).red().to_string();
-                        eprintln!("{}", error);
-                        exit(100)
+                        exit(format!("Unknown flag {}.", flag), ExitCode::BadArgument);
                     }
                 }
 
@@ -327,9 +316,7 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
             // The argument is not a flag, nor is it used after a flag, ...
             // ... so it has to be the name of the file
             if result.file.is_some(){
-                let error = format!("\"{}\" and \"{:?}\" can't both be input files.", result.file.clone().unwrap(), arg).red().to_string();
-                eprintln!("{}", error);
-                exit(100);
+                exit(format!("\"{}\" and \"{:?}\" can't both be input files.", result.file.clone().unwrap(), arg), ExitCode::BadArgument);
             }
 
             // Isn't yet written, so add the file name
@@ -338,9 +325,7 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
     }
 
     if current_flag.is_some() && !result.help {
-        let error = "All flags that act like parameters must have their second part provided.".red().to_string();
-        eprintln!("{}", error);
-        exit(100);
+        exit("All flags that act like parameters must have their second part provided.".to_string(), ExitCode::BadArgument);
     }
 
     if current_flag.is_some() {
@@ -359,17 +344,13 @@ fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
             }
 
             _=>{
-                let error = format!("Unknown flag {}.", current_flag.unwrap()).red().to_string();
-                eprintln!("{}", error);
-                exit(100)
+                exit(format!("Unknown flag {}.", current_flag.unwrap()), ExitCode::BadArgument);
             }
         }
     }
 
     if result.needs_input_file(){
-        let error = "No input files provided.".red().to_string();
-        eprintln!("{}", error);
-        exit(100);
+        exit("No input files provided.".to_string(), ExitCode::BadArgument);
     }
 
     result

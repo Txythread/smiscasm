@@ -1,9 +1,8 @@
-use std::process::exit;
-use colorize::AnsiColor;
 use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::util::replacement::Replacement;
 use crate::assembler::valuerepl::{LineKind, ValueReplResult};
 use crate::assembler::ya_tokenizer::InstructionArgs::{Global, Immediate, Register};
+use crate::util::exit::{exit, exit_with_variant, ExitCode};
 
 // Yet another tokenizer
 /// Tokenizes ValueReplResult into YATokenizerResult
@@ -26,9 +25,7 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
         let real_line_number = from.line_mapping.iter().find(| &&x | x.0 == line_number);
 
         if real_line_number.is_none() {
-            let error = format!("Internal error with line mapping likely caused by \"valuegen\" or \"valuerepl\"., the line number in it's resulting code is: {}.", line_number).red().to_string();
-            eprintln!("{}", error);
-            exit(299);
+            exit_with_variant(format!("Internal error with line mapping likely caused by \"valuegen\" or \"valuerepl\"., the line number in it's resulting code is: {}.", line_number), ExitCode::Internal, 2);
         }
 
         let real_line_number = real_line_number.unwrap().1;
@@ -52,9 +49,7 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
                     // If it can be passed immediately, it's just an immediate value.
                     if let Some(value) = token.parse::<i32>().ok(){
                         if value.abs() > MEMORY_PAGE_SIZE as i32 {
-                            let error = format!("The value in line {} can't fit into the range of an immediate value (-{}...{})", real_line_number, MEMORY_PAGE_SIZE, MEMORY_PAGE_SIZE - 1).red().to_string();
-                            eprintln!("{}", error);
-                            exit(105);
+                            exit(format!("The value in line {} can't fit into the range of an immediate value (-{}...{})", real_line_number, MEMORY_PAGE_SIZE, MEMORY_PAGE_SIZE - 1), ExitCode::BadCode);
                         }else {
                             // Correct the format
                             // Choose last 12 bits
@@ -77,9 +72,7 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
                     if first_char == 'x'{
                         if let Some(value) = token_except_first_char.parse::<i32>().ok(){
                             if value > 31 || value < 0 {
-                                let error = format!("Register number {} doesn't exist but was called at {}.", value, real_line_number).red().to_string();
-                                eprintln!("{}", error);
-                                exit(105);
+                                exit(format!("Register number {} doesn't exist but was called at {}.", value, real_line_number), ExitCode::BadCode);
                             }
 
 

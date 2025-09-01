@@ -1,10 +1,8 @@
-use std::process::exit;
 use colorize::AnsiColor;
 use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::assembler::ya_tokenizer::{InstructionArgs, Line, YATokenizerResult};
 use crate::instruction::instruction::*;
-
-
+use crate::util::exit::{exit, exit_with_variant, ExitCode};
 // This name is really bad, ik
 // I just want RustRover to sort all of them in a reasonable order.
 // And it's alphabetically.
@@ -31,9 +29,7 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
                 // Look if the section was too long
                 if result.len() > next_page_start {
                     // Too long, throw error
-                    let error = format!("Section \"{}\"", current_section_name).red().to_string();
-                    eprintln!("{}", error);
-                    exit(105);
+                    exit(format!("Section \"{}\"", current_section_name), ExitCode::BadCode);
                 }
                 // Start a new section
                 // Find the section's name
@@ -55,9 +51,7 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
         let real_line_number = input.line_mapping.iter().find(| &&x | x.0 == i);
 
         if real_line_number.is_none() {
-            let error = format!("Internal error with line mapping likely caused by \"valuegen\" or \"valuerepl\"., the line number in it's resulting code is: {}.", i).red().to_string();
-            eprintln!("{}", error);
-            exit(299);
+            exit_with_variant(format!("Internal error with line mapping likely caused by \"valuegen\" or \"valuerepl\"., the line number in it's resulting code is: {}.", i), ExitCode::Internal, 2);
         }
 
         let real_line_number = real_line_number.unwrap().1;
@@ -85,7 +79,7 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
                 let instruction = instructions.iter().find(| &x | x.clone().name == name && x.clone().format == format);
 
                 if instruction.is_none(){
-                    let mut error = format!("Instruction '{}' from line {} with format (", name, real_line_number).to_string();
+                    let mut error = format!("Instruction '{}' from line {} with format (", name, real_line_number);
                     let mut error_format_string = String::new();
                     for format in format.iter() {
                         // If there is something in the format string already, print a colon
@@ -98,11 +92,12 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
                             error_format_string += "Register";
                         }
                     }
+
                     error += error_format_string.as_str();
                     error += ") doesn't exist.";
                     error = error.red().to_string();
-                    eprintln!("{}", error);
-                    exit(105);
+
+                    exit(error, ExitCode::BadCode);
                 }
 
                 let instruction = instruction.unwrap().clone();

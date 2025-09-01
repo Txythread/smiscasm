@@ -12,23 +12,11 @@ impl Replacement {
         Replacement {initial_value: _name, new_value: replacement, is_function, is_global: false}
     }
 
-    #[allow(dead_code)]
     pub fn get_name(&self) -> String { self.initial_value.clone() }
-    #[allow(dead_code)]
     pub fn get_value(&self) -> String { self.new_value.clone() }
-    #[allow(dead_code)]
     pub fn get_is_function(&self) -> bool { self.is_function }
-    #[allow(dead_code)]
     pub fn get_is_global(&self) -> bool { self.is_global }
-    #[allow(dead_code)]
     pub fn set_is_global(&mut self, is_global: bool) { self.is_global = is_global; }
-    #[allow(dead_code)]
-    pub fn set_value(&mut self, new_value: String, is_function: bool) { self.new_value = new_value; self.is_function = is_function; }
-    #[allow(dead_code)]
-    pub fn set_is_function(&mut self, is_function: bool) { self.is_function = is_function; }
-
-    #[allow(dead_code)]
-    pub fn make_description(&self) -> String { format!("Replacing {} with {} while being a function: {}", self.initial_value, self.new_value, self.is_function)}
 }
 
 impl Debug for Replacement{

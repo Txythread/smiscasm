@@ -1,5 +1,4 @@
-use std::process::exit;
-use colorize::*;
+use crate::util::exit::{exit, ExitCode};
 
 /// Split lines into tokens
 #[allow(dead_code)]
@@ -76,9 +75,7 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
                 if in_string_literal {
                     // Check the literal is valid
                     if current_token.is_empty() {
-                        let error = format!("String or character literal at line {} is empty", line_number).red().to_string();
-                        eprintln!("{}", error);
-                        exit(105);
+                        exit(format!("String or character literal at line {} is empty", line_number).to_string(), ExitCode::BadCode);
                     }
                     // Add the current token & the ''' or the '"'.
                     current_line_tokens.push(current_token.clone());
@@ -103,9 +100,7 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
         }
 
         if in_string_literal {
-            let error = format!("String or character literal at line {} lacks trailing.", line_number).red();
-            eprintln!("{}", error);
-            exit(105);
+            exit(format!("String or character literal at line {} lacks trailing.", line_number).to_string(), ExitCode::BadCode);
         }
 
         if !current_token.is_empty() {
