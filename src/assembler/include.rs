@@ -8,9 +8,10 @@ use reqwest::get;
 use url::Url;
 use crate::expand_path;
 
-const KNOWN_PUBLIC_LIBS: [(&str, &str, &str); 1] = [
-    //  NAME                                 DOWNLOAD ADDRESS                                FILE NAME
-    ("bscmath", "https://raw.githubusercontent.com/Txythread/smisc-bscmath/main/bscmath.s", "bscmath.s")
+const KNOWN_PUBLIC_LIBS: [(&str, &str, &str); 2] = [
+    //  NAME                DOWNLOAD ADDRESS                                                                            FILE NAME
+    ("bscmath",             "https://raw.githubusercontent.com/Txythread/smisc-bscmath/main/bscmath.s",                 "bscmath.s"),
+    ("debuglib",            "https://raw.githubusercontent.com/Txythread/smisc-debuglib/main/debuglib.s",               "debuglib.s"),
 ];
 
 const PUBLIC_LIBS_DIR: &str = "pub-libs/";

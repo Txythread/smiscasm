@@ -1,6 +1,5 @@
 use std::process::exit;
 use colorize::AnsiColor;
-use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::assembler::valuegen::ValueGenResult;
 use crate::util::replacement::Replacement;
 
