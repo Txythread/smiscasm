@@ -4,7 +4,7 @@ use crate::util::exit::{ exit, ExitCode };
 use crate::util::remove_comments::remove_comments_in_line;
 
 const INSTRUCTION_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/instructions");
-const OUTPUT_MAP_STRING: [&str; 28] = ["PC_OUT", "PC_IN", "PC_INC", "MEM_ADDR_PTR_IN", "ALU_IN_A", "ALU_IN_B", "CAL_REG_A_IN", "CAL_REG_B_IN", "CAL_REG_A_OUT", "CAL_REG_B_OUT", "IMMEDIATE_OUT", "INSTR_IN", "MEM_OUT", "PLUS_OUT", "RESET_MICRO", "STDTRANS_IN", "STDTRANS_OUT", "STDTRANS_SEND", "ZF_IN", "ZF_OUT", "SUB_OUT", "MEM_BYTE_OUT", "LSH_OUT", "SP_OUT", "SP_IN", "MEM_IN", "SP_DEC_DW", "SP_INC_DW"]; // The left-most string in the list will end up in the LSb of the control 'word'
+const OUTPUT_MAP_STRING: [&str; 29] = ["PC_OUT", "PC_IN", "PC_INC", "MEM_ADDR_PTR_IN", "ALU_IN_A", "ALU_IN_B", "CAL_REG_A_IN", "CAL_REG_B_IN", "CAL_REG_A_OUT", "CAL_REG_B_OUT", "IMMEDIATE_OUT", "INSTR_IN", "MEM_OUT", "PLUS_OUT", "RESET_MICRO", "STDTRANS_IN", "STDTRANS_OUT", "STDTRANS_SEND", "ZF_IN", "ZF_OUT", "SUB_OUT", "MEM_BYTE_OUT", "LSH_OUT", "SP_OUT", "SP_IN", "MEM_IN", "SP_DEC_DW", "SP_INC_DW", "MEM_B_IN"]; // The left-most string in the list will end up in the LSb of the control 'word'
 
 #[derive(Debug)]
 pub struct Instruction {
