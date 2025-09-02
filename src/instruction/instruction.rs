@@ -28,7 +28,7 @@ impl Instruction {
     pub fn check(&self) -> bool /*should be zero*/{
         // Check length
         if self.format.iter().count() > 3{
-            return false;
+            return true;
         }
 
         // Check whether any other argument other than the last one is an immediate value.
