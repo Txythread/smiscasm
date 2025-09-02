@@ -1,7 +1,6 @@
-use std::process::exit;
 use std::string::ToString;
-use colorize::AnsiColor;
 use include_dir::{include_dir, Dir};
+use crate::util::exit::{ exit, ExitCode };
 use crate::util::remove_comments::remove_comments_in_line;
 
 const INSTRUCTION_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/instructions");
@@ -68,9 +67,7 @@ impl Instruction {
                 }
 
                 _ => {
-                    let error = format!("Unknown expression ({}).\nShould be x for register or i for immediate value.\nThis was found in the code for the {} instruction.", format_expression, name).red().to_string();
-                    eprintln!("{}", error);
-                    exit(103);
+                    exit(format!("Unknown expression ({}).\nShould be x for register or i for immediate value.\nThis was found in the code for the {} instruction.", format_expression, name), ExitCode::Other);
                 }
             }
         }
@@ -79,17 +76,13 @@ impl Instruction {
         let op_code_string = op_code_string_with_whitespaces.split_whitespace().nth(0);
 
         if op_code_string.is_none() {
-            let error = format!("No op-code provided for instruction {}.", name).red().to_string();
-            eprintln!("{}", error);
-            exit(103);
+            exit(format!("No op-code provided for instruction {}.", name), ExitCode::Other);
         }
 
         let op_code = u16::from_str_radix(op_code_string.unwrap(), 16);
 
         if op_code.is_err() {
-            let error = format!("Couldn't generate number from string {} which should refer to {} instruction's OP-Code.", op_code_string.unwrap(), name).red().to_string();
-            eprintln!("{}", error);
-            exit(103);
+            exit(format!("Couldn't generate number from string {} which should refer to {} instruction's OP-Code.", op_code_string.unwrap(), name), ExitCode::Other);
         }
 
         let op_code = op_code.unwrap();
@@ -175,9 +168,7 @@ pub fn get_all_instructions() -> Vec<Instruction> {
         let instruction = Instruction::from_string(file_contents.to_string());
 
         if instruction.check() {
-            let error = format!("Instruction named {} didn't pass instruction check.", instruction.name).red().to_string();
-            eprintln!("{}", error);
-            exit(103);
+            exit(format!("Instruction named {} didn't pass instruction check.", instruction.name), ExitCode::Other);
         }
 
         // Don't ask why
@@ -188,6 +179,21 @@ pub fn get_all_instructions() -> Vec<Instruction> {
             stages: instruction.stages.clone(),
         });
     }
+
+    // Check whether there are instructions with the same op codes.
+
+    let instruction_op_codes = instructions.iter().map(|i| i.op_code.clone()).collect::<Vec<u16>>();
+
+    instructions.iter().for_each(| x | {
+        let x = x.clone();
+
+        // The amount of instructions with the same OP-Code (including the instruction itself)
+        let op_code_frequency = instruction_op_codes.iter().filter(|&y| *y == x.op_code).count();
+
+        if op_code_frequency != 1 {
+            exit(format!("OP-Codes should be unique to each instruction, but there are {} more instructions using the same op-codes as the \"{}\" instruction.", op_code_frequency - 1, x.name), ExitCode::Other);
+        }
+    });
 
     instructions
 }
