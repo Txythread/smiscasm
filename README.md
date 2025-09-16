@@ -150,19 +150,8 @@ This command gets invoked by `smiscvm` (during the build process), too.
 
 You can generate them with the `--generate-instruction-table` flag.
 
-## Building
-First, clone the repo using:  
-`git clone https://github.com/Txythread/smiscasm`  
 
-Once the download finishes, build it using *production.sh*.  
-`cd smiscasm`  
-`./production.sh`
-
-This might take a while depending on your CPU and you might be asked to **enter your password** this is for moving the binary into */bin* only.  
-In case you don't trust the script, just stop once you're getting asked and run `sudo mv target/debug/smiscasm /usr/local/bin` yourself.
-
-
-## Actually Compiling
+## Actually Assembling
 To run *smiscasm* with its standard functionality (assembling & linking), just run:  
 ```smiscasm my_code.s```
 
