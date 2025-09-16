@@ -4,7 +4,6 @@ use crate::util::math::resolve_string;
 use crate::util::exit::{exit, exit_with_variant, ExitCode};
 
 /// Find global constant declarations and labels (function definitions) in code and separate them.
-#[allow(dead_code)]
 pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
     let mut result = ValueGenResult{ constants: vec![], sections: vec![], code: vec![], line_mapping: vec![] };
 
