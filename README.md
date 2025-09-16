@@ -25,7 +25,7 @@ Lastly, execute the build script.
 ```
 ./production.sh
 ```
-*This will ask you for your password. If you don't want this, cancel the script and execute `sudo mv target/debug/smiscasm /usr/bin/local` manually.*
+*This will ask you for your password. If you don't want this, cancel the script and execute `sudo mv target/debug/smiscasm /usr/local/bin` manually.*
 
 
 
