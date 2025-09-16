@@ -7,7 +7,7 @@ main:
 	add x3, op1@PAGEOFF
 	adrp x4, op2@PAGE
 	add x4, op2@PAGEOFF
-	#ble x2
+	cal x2
 	hlt
 
 !include bscmath
