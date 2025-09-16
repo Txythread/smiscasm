@@ -1,3 +1,4 @@
+use std::process::Command;
 use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::util::replacement::Replacement;
 use crate::assembler::valuerepl::{LineKind, ValueReplResult};
@@ -39,6 +40,38 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
             LineKind::ASCII => {
                 result.code.push(Line::ASCII(code[0].clone()));
                 continue;
+            }
+
+            LineKind::STC => {
+                let text = code[0].clone();
+
+                // Convert using smisc-connect as it has the required functionality
+                // Then make a string from the output.
+                let mut stc_values_string = Command::new("smisc-connect".to_string())
+                    .arg("--convert-to-stc".to_string())
+                    .arg(text.clone())
+                    .output()
+                    .expect("Failed to execute smisc-connect. Is smisc-connect installed?")
+                    .stdout;
+
+                stc_values_string.remove(stc_values_string.len() - 1);
+
+
+                let stc_values_string =
+                    stc_values_string
+                    .iter().map(|x|x.clone() as char)
+                    .map(|x|x.to_string())
+                    .collect::<Vec<String>>()
+                    .join("");
+
+
+                // The output from smisc-connect should contain one value per line.
+                // Separate each line to an element in a vector.
+                let stc_values_array = stc_values_string.split(':').collect::<Vec<&str>>();
+
+                let stc_values = stc_values_array.iter().map(|&x| x.parse().unwrap()).collect();
+
+                result.code.push(Line::STC(stc_values));
             }
 
             LineKind::Code(_) => {
@@ -103,6 +136,7 @@ pub struct YATokenizerResult {
 pub enum Line{
     Instruction(String, Vec<InstructionArgs>),      // Name and args
     ASCII(String),                                  // ASCII Text
+    STC(Vec<u8>),                                   // STC Text values
 }
 
 impl PartialEq for Line{
@@ -110,6 +144,7 @@ impl PartialEq for Line{
         match (self, other) {
             (Line::ASCII(a), Line::ASCII(b)) => a == b,
             (Line::Instruction(a, x), Line::Instruction(b, y)) => a == b && x == y,
+            (Line::STC(a), Line::STC(b)) => a == b,
             _ => false,
         }
     }
@@ -119,6 +154,7 @@ impl Clone for Line {
     fn clone(&self) -> Self {
         match self {
             Line::ASCII(a) => Line::ASCII(a.clone()),
+            Line::STC(x) => Line::STC(x.clone()),
             Line::Instruction(a, b) => Line::Instruction(a.clone(), b.clone()),
         }
     }

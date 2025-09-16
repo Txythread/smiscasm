@@ -46,9 +46,9 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     current_section_start = bytes_count;
                 }
 
-                "ascii" => {
+                "ascii" | "stc" => {
                     if line.len() != 5{
-                        exit(format!("Ascii in line {} can't be decoded. (1)", line_number), ExitCode::BadCode);
+                        exit(format!("Ascii or stc in line {} can't be decoded. (1)", line_number), ExitCode::BadCode);
                     }
 
                     let first_quote = line.iter().nth(2).unwrap();
@@ -56,7 +56,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     let second_quote = line.iter().nth(4).unwrap();
 
                     if first_quote != "\"" || second_quote != "\"" {
-                        exit(format!("String expected for ASCII decoding, but no string found in line {}.", line_number), ExitCode::BadCode);
+                        exit(format!("String expected for ASCII/STC decoding, but no string found in line {}.", line_number), ExitCode::BadCode);
                     }
 
                     // Increment the byte counter

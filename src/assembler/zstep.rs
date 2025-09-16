@@ -148,6 +148,10 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
             Line::ASCII(text) => {
                 append_ascii_string_to_vec(&mut result, &mut actual_bytes_written, text.clone());
             }
+
+            Line::STC(text_stc_values) => {
+                append_vector_to_vec(&mut result, &mut actual_bytes_written, text_stc_values);
+            }
         }
     }
 
@@ -185,4 +189,11 @@ fn append_ascii_string_to_vec(x: &mut Vec<u8>, size: &mut u32, string: String){
         x.push(char as u8);
     }
     *size += string.len() as u32;
+}
+
+fn append_vector_to_vec(x: &mut Vec<u8>, size: &mut u32, data: Vec<u8>){
+    for item in data.clone(){
+        x.push(item);
+    }
+    *size += data.len() as u32;
 }

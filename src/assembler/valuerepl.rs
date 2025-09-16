@@ -50,6 +50,17 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
                     continue;
                 }
 
+                "stc" => {
+                    let text = line[2].clone();
+
+                    if !text.is_ascii() {
+                        exit(format!("Text in STC data is expected to consist of ASCII characters only, but \"{}\" in line {} doesn't follow that rule.", text, real_line_number), ExitCode::BadCode);
+                    }
+
+                    result.code.push((vec![text], LineKind::STC));
+                    continue;
+                }
+
                 _ => {
                     exit(format!("Internal error with data likely caused by \"valuegen\". Please double check your code at line {} for wrong data types.", real_line_number), ExitCode::BadCode);
                 }
@@ -197,6 +208,7 @@ pub struct ValueReplResult{
 pub enum LineKind {
     Code(bool),     // bool: immediate value?
     ASCII,
+    STC
 }
 
 impl PartialEq for LineKind {
