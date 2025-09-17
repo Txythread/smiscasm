@@ -14,4 +14,4 @@ if [ $? -ne 0 ]; then
 	exit 2
 fi
 
-sudo mv target/release/smiscasm /usr/local/bin
+sudo --user=root mv target/release/smiscasm /usr/local/bin
