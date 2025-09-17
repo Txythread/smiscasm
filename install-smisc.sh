@@ -84,6 +84,8 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
+echo "smiscasm compiled"
+
 
 # Compile smiscvm and smisc-connect at once
 cd ../smiscvm
@@ -102,6 +104,7 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
+echo "smiscvm compiled"
 
 # Check if smiscvm compiled successfuly
 which smisc-connect 1>/dev/null
@@ -112,4 +115,21 @@ if [ $? -ne 0 ]; then
 fi
 
 
-echo "Done. You can remove the newly downloaded smisc directories if you want to."
+echo "smisc-connect compiled"
+
+# Remove the leftovers if requested.
+read -r -p "Do you want to remove the installation folders (n if you want to modify the programm)? [y/N] " response
+case "$response" in
+    [yY][eE][sS]|[yY]) 
+        sudo rm -r smiscasm
+		sudo rm -r smiscvm
+  		sudo rm -r smisc-connect
+        ;;
+    *)
+        
+        ;;
+esac
+
+
+
+echo "Done!"
