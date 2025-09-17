@@ -7,6 +7,33 @@ git clone https://github.com/Txythread/smisc-connect
 
 wait $!
 
+
+cargo --version 1>/dev/null
+
+if [ $? -ne 0 ]; then
+	echo "Couldn't ivoke cargo. Is rust installed correctly?!" 1>&2
+	exit 1
+fi
+
+
+rustc --version 1>/dev/null
+
+if [ $? -ne 0 ]; then
+	echo "Couldn't invoke rustc. Is rust installed correctly?!" 1>&2
+	exit 1
+fi
+
+
+openssl --version 1>/dev/null
+
+if [ $? -ne 0 ]; then
+	echo "Couldn't invoke openssl. Please install openssl to proceed" 1>&2
+	exit 1
+fi
+
+
+
+
 echo "Executing build scripts ..."
 echo "Note: This might take a while."
 echo "You may be asked to enter your password."
