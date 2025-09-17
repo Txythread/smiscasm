@@ -24,7 +24,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-openssl --version 1>/dev/null
+openssl 1>/dev/null
 
 if [ $? -ne 0 ]; then
 	echo "Couldn't invoke openssl. Please install openssl to proceed" 1>&2
