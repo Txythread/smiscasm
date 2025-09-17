@@ -40,7 +40,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-which pgk-config 1>/dev/null
+which pkg-config 1>/dev/null
 
 if [ $? -ne 0 ]; then
 	echo "Couldn't invoke pkg-config. Please install pkg-config to proceed" 1>&2
