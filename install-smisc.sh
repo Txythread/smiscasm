@@ -8,7 +8,7 @@ git clone https://github.com/Txythread/smisc-connect
 wait $!
 
 
-cargo --version 1>/dev/null
+which cargo 1>/dev/null
 
 if [ $? -ne 0 ]; then
 	echo "Couldn't ivoke cargo. Is rust installed correctly?!" 1>&2
@@ -16,7 +16,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-rustc --version 1>/dev/null
+which rustc 1>/dev/null
 
 if [ $? -ne 0 ]; then
 	echo "Couldn't invoke rustc. Is rust installed correctly?!" 1>&2
@@ -24,7 +24,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-openssl 1>/dev/null
+which openssl 1>/dev/null
 
 if [ $? -ne 0 ]; then
 	echo "Couldn't invoke openssl. Please install openssl to proceed" 1>&2
