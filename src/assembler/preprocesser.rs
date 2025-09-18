@@ -1,4 +1,4 @@
-use crate::util::line_mapping::{LineInfo, LineMap};
+use crate::util::line_mapping::LineMap;
 
 // Removes comments, empty lines, splits lines into parts
 /// Removes unnecessary information, splits text into lines and tokens

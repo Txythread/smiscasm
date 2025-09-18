@@ -1,3 +1,5 @@
+use std::io::ErrorKind;
+use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 use crate::util::exit::{exit, ExitCode};
 use crate::util::line_mapping::LineMap;
 
@@ -28,7 +30,7 @@ pub fn tokenize(input: Vec<String>, input_line_map: LineMap) -> (Vec<Vec<String>
         let mut in_string_literal = false;
         let mut current_token_start = 0;
 
-        let mut current_char_count = -1;
+        let mut current_char_count = -1i32;
         for i in line.chars().enumerate() {
             let char = i.1.clone();
             current_char_count += 1;
@@ -100,7 +102,19 @@ pub fn tokenize(input: Vec<String>, input_line_map: LineMap) -> (Vec<Vec<String>
                 if in_string_literal {
                     // Check the literal is valid
                     if current_token.is_empty() {
-                        exit(format!("String or character literal at line {} is empty", line_number).to_string(), ExitCode::BadCode);
+                        let mut code = vec![];
+
+                        let real_line_number = input_line_map.lines[line_number].line_number;
+
+                        for _ in 0..real_line_number {
+                            code.push("".to_string());
+                        }
+
+                        code.push(line.clone());
+
+                        display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_token.len() + 2) as u32), "Empty String Literal".to_string(), "Empty string literals are not allowed, but an empty string literal was found here.".to_string(), code);
+                        output_line_map.errors_count += 1;
+                        output_line_map.stop_after_step = true;
                     }
                     // Add the current token & the ''' or the '"'.
                     current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
@@ -139,7 +153,20 @@ pub fn tokenize(input: Vec<String>, input_line_map: LineMap) -> (Vec<Vec<String>
         }
 
         if in_string_literal {
-            exit(format!("String or character literal at line {} lacks trailing.", line_number).to_string(), ExitCode::BadCode);
+            let real_line_number = input_line_map.lines[line_number].line_number;
+
+            let mut code: Vec<String> = vec![];
+
+            for _ in 0..real_line_number {
+                code.push("".to_string());
+            }
+
+            code.push(line.clone());
+
+
+            display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_char_count - current_token_start + 2) as u32), "Unterminated String Literal".to_string(), "String literals always need to be terminated, but this one wasn't closed.\nAdd the missing \".".to_string(), code);
+            output_line_map.errors_count += 1;
+            output_line_map.stop_after_step = true;
         }
 
         if !current_token.is_empty() {

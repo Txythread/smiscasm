@@ -64,7 +64,8 @@ impl LineMap{
 
     pub fn exit_if_needed(&mut self){
         if self.stop_after_step{
-            println!("{}", format!("Assembling failed with {} errors and {} warnings", self.errors_count, self.warnings_count).red().to_string())
+            println!("{}", format!("Assembling failed with {} errors and {} warnings", self.errors_count, self.warnings_count).red().to_string());
+            std::process::exit(105);
         }
     }
 }
@@ -74,7 +75,7 @@ pub struct LineInfo {
     contents: String,           // The contents (without leading & trailing whitespaces)
     indent: u32,                // The indent (in spaces) this line has (for formatting)
     pub token_info: Vec<(u32, u32)>,// The start of a token and its length
-    line_number: u32,           // The original line number
+    pub line_number: u32,           // The original line number
 }
 
 impl LineInfo{

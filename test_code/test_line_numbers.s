@@ -10,3 +10,5 @@ sdt 94
 
 .section "DATA"
 	sdt 94
+
+.stc "Hello, world how are you asdfasdfasdf
