@@ -12,6 +12,7 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
     // Having more than two characters is not allowed
     let token_markers = [".".to_string(), "@".to_string(), ":".to_string(), "0x".to_string(), "0b".to_string(), "0o".to_string(), "[".to_string(), "]".to_string(), "(".to_string(), ")".to_string(), "<".to_string(), ">".to_string(), ",".to_string(), "+".to_string(), "*".to_string(), "/".to_string(), "%".to_string(), "&".to_string()];
 
+
     for line in input.iter().enumerate() {
         let line_number = line.0;
         let line = line.1.clone();

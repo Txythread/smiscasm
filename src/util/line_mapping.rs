@@ -2,12 +2,14 @@
 // from another file in a later phase of assembly.
 
 use std::collections::HashMap;
+use termimad::crossterm::style::Stylize;
 use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 
+#[derive(Debug)]
 pub struct LineMap{
-    lines: Vec<LineInfo>,       // The lines that currently exist. Current & Real lines are not one-to-one.
-    stop_after_step: bool,      // Stop after the current step has been executed, but finish this one.
-    warnings_count: usize,      // The amount of warnings
+    pub lines: Vec<LineInfo>,       // The lines that currently exist. Current & Real lines are not one-to-one.
+    pub stop_after_step: bool,      // Stop after the current step has been executed, but finish this one.
+    pub warnings_count: usize,      // The amount of warnings
     pub errors_count: usize,        // The amount of errors. If > 0, compilation will not succeed.
 }
 
@@ -59,9 +61,15 @@ impl LineMap{
 
         display_code_error(kind.clone(), line_info.line_number as i32, None, None, title, message, code);
     }
+
+    pub fn exit_if_needed(&mut self){
+        if self.stop_after_step{
+            println!("{}", format!("Assembling failed with {} errors and {} warnings", self.errors_count, self.warnings_count).red().to_string())
+        }
+    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LineInfo {
     contents: String,           // The contents (without leading & trailing whitespaces)
     indent: u32,                // The indent (in spaces) this line has (for formatting)

@@ -41,6 +41,8 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
         // Strip the !include to arrive at the file name
         let inclusion_argument = line.strip_prefix("!include").unwrap().trim().to_string();
 
+        println!("Trying to find library: {}", inclusion_argument);
+
 
         // Look if the file exists.
         if let Some(file) = expand_path(inclusion_argument.as_str()) {
@@ -158,6 +160,7 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
         let column = 9; // The length of the !include statement
         display_code_error(ErrorNotificationKind::Error, current_line_number as i32, Some(column), Some(inclusion_argument.len() as u32), "Library not found".to_string(), "There was no file found with that name, no URL with that name could be reached and there's no such well-known public library.".to_string(), code);
         line_map.errors_count += 1;
+        line_map.stop_after_step = true;
     }
 
     let mut code = result.join("\n");
