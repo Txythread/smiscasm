@@ -205,6 +205,7 @@ mod tests {
 
     #[test]
     fn test_get_all_instructions() {
+        // Just look if it fails
         let _ = get_all_instructions();
     }
 }

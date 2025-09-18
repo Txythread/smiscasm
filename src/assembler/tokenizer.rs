@@ -1,7 +1,6 @@
 use crate::util::exit::{exit, ExitCode};
 
 /// Split lines into tokens
-#[allow(dead_code)]
 pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
     // The remaining spaces always start a new token, but are themselves to be ignored.
     // '.',  '@',  ':',  '0x',  '0b', '0o'  '[',  ']',  '(',  ')',  ',',  '<',  '>',  '+',   '*',  '/',  '&'  &  '%'

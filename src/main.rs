@@ -14,6 +14,7 @@ mod instruction;
 mod assembler;
 mod help;
 
+#[derive(Debug, PartialEq)]
 pub struct ArgumentList{
     pub file: Option<String>,
     pub help: bool,                             // -h or --help
@@ -34,23 +35,6 @@ impl ArgumentList{
         !is_ok
     }
 }
-
-impl Debug for ArgumentList{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ArgumentList")
-            .field("file", &self.file)
-            .field("test", &self.help)
-            .field("output_name", &self.output_name)
-            .finish()
-    }
-}
-
-impl PartialEq for ArgumentList{
-    fn eq(&self, other: &Self) -> bool{
-        self.file == other.file && self.help == other.help && self.generate_instruction_table == other.generate_instruction_table && self.output_name == other.output_name
-    }
-}
-
 
 #[tokio::main]
 async fn main() {

@@ -203,23 +203,13 @@ pub struct ValueReplResult{
     pub line_mapping: Vec<(usize, usize)>,      // How the new line number in the resulting code above (.0) refers to the original line number (.1)
 }
 
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LineKind {
     Code(bool),     // bool: immediate value?
     ASCII,
     STC
 }
 
-impl PartialEq for LineKind {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (LineKind::Code(a), LineKind::Code(b)) => a == b,
-            (LineKind::ASCII, LineKind::ASCII) => true,
-            _ => false,
-        }
-    }
-}
 
 
 

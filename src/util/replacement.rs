@@ -1,5 +1,6 @@
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Replacement {
     initial_value: String,
     new_value: String,
@@ -17,30 +18,4 @@ impl Replacement {
     pub fn get_is_function(&self) -> bool { self.is_function }
     pub fn get_is_global(&self) -> bool { self.is_global }
     pub fn set_is_global(&mut self, is_global: bool) { self.is_global = is_global; }
-}
-
-impl Debug for Replacement{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Replacement")
-            .field("initial_value", &self.initial_value)
-            .field("new_value", &self.new_value)
-            .field("is_function", &self.is_function)
-            .field("is_global", &self.is_global)
-            .finish()
-    }
-}
-
-impl PartialEq for Replacement{
-    fn eq(&self, other: &Self) -> bool {
-        if self.initial_value != other.initial_value { return false }
-        if self.new_value != other.new_value { return false }
-        if self.is_function != other.is_function { return false }
-        if self.is_global != other.is_global { return false }
-
-        true
-    }
-}
-
-impl Clone for Replacement{
-    fn clone(&self) -> Self { Replacement{ initial_value: self.initial_value.clone(), new_value: self.new_value.clone(), is_function: self.is_function.clone(), is_global: self.is_global.clone() } }
 }

@@ -1,5 +1,4 @@
 // Removes comments, empty lines, splits lines into parts
-#[allow(dead_code)]
 /// Removes unnecessary information, splits text into lines and tokens
 pub fn preprocess(code: String) -> Vec<String> {
     // Split into lines at newline characters

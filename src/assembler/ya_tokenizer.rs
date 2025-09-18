@@ -132,61 +132,21 @@ pub struct YATokenizerResult {
     pub line_mapping: Vec<(usize, usize)>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Line{
     Instruction(String, Vec<InstructionArgs>),      // Name and args
     ASCII(String),                                  // ASCII Text
     STC(Vec<u8>),                                   // STC Text values
 }
 
-impl PartialEq for Line{
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Line::ASCII(a), Line::ASCII(b)) => a == b,
-            (Line::Instruction(a, x), Line::Instruction(b, y)) => a == b && x == y,
-            (Line::STC(a), Line::STC(b)) => a == b,
-            _ => false,
-        }
-    }
-}
 
-impl Clone for Line {
-    fn clone(&self) -> Self {
-        match self {
-            Line::ASCII(a) => Line::ASCII(a.clone()),
-            Line::STC(x) => Line::STC(x.clone()),
-            Line::Instruction(a, b) => Line::Instruction(a.clone(), b.clone()),
-        }
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum InstructionArgs{
     Register(u8),                                   // Only least significant 6 bits
     Immediate(u16),                                 // Least significant 11 are value, the 12th one from the right is the sign, the 13th one is "shift by eleven bits"
     Global(String),                                 // The name of the global constant
 }
 
-impl PartialEq for InstructionArgs {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Register(a), Register(b)) => a == b,
-            (Immediate(a), Immediate(b)) => a == b,
-            (Global(a), Global(b)) => a == b,
-            _ => false,
-        }
-    }
-}
-
-impl Clone for InstructionArgs {
-    fn clone(&self) -> Self {
-        match self{
-            Immediate(immediate) => Immediate(immediate.clone()),
-            Global(global) => Global(global.clone()),
-            Register(register) => Register(*register),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
