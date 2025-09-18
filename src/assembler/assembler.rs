@@ -13,7 +13,12 @@ pub const MEMORY_PAGE_SIZE: usize = 4096;
 /// Links & assembles code given an instruction set
 pub async fn assemble(code: String, instructions: Vec<Instruction>) -> Vec<u8> {
     let inclusive = perform_inclusions(code).await;
-    let preprocessed: Vec<String> = preprocess(inclusive);
+
+    if inclusive.1.errors_count > 0 {
+        std::process::exit(65);
+    }
+
+    let preprocessed: Vec<String> = preprocess(inclusive.0);
     let tokenized: Vec<Vec<String>> = tokenize(preprocessed);
     let value_gen_result: ValueGenResult = gen_values(tokenized);
     let value_repl_result: ValueReplResult = replace_values_in_code(value_gen_result);

@@ -1,5 +1,5 @@
 use std::env;
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 use std::fs;
 use std::path::PathBuf;
 use crate::instruction::instruction::{Instruction, micro_operation_at};
@@ -7,7 +7,8 @@ use crate::assembler::assembler::assemble;
 use crate::help::help::{print_help, print_instruction_help};
 use std::fs::File;
 use std::io::prelude::*;
-use crate::util::exit::{exit, exit_with_variant, ExitCode};
+use crate::util::exit::{exit, ExitCode};
+use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 
 mod util;
 mod instruction;
