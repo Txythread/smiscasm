@@ -104,7 +104,7 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
 
                 if arg0_value.is_none() {
                     // The constant doesn't exist, probably a user misspelling.
-                    exit_with_variant(format!("Label {} called in line {} does not exist.", arg[0], real_line_number), ExitCode::BadCode, 3);
+                    exit(format!("Label {} called in line {} does not exist. (3)", arg[0], real_line_number), ExitCode::BadCode);
                 }
 
                 let arg0_value = arg0_value.unwrap().clone().get_value();
@@ -113,7 +113,7 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
                 let mut arg0_value_split = arg0_value.split(':');
 
                 if arg0_value_split.clone().count() != 2{
-                    exit_with_variant(format!("Expected address before modifier, but line {} violates this rule.", real_line_number), ExitCode::BadCode, 4);
+                    exit_with_variant(format!("Expected address before modifier, but line {} violates this rule. (4)", real_line_number), ExitCode::BadCode, 0);
                 }
 
                 let arg0_page = arg0_value_split.next().unwrap();
@@ -140,7 +140,7 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
                     }
 
                     _ => {
-                        exit_with_variant(format!("Modifier {} called in line {} does not exist.", arg[2], real_line_number), ExitCode::BadCode, 5);
+                        exit_with_variant(format!("Modifier {} called in line {} does not exist. (5)", arg[2], real_line_number), ExitCode::BadCode, 1);
                     }
                 }
                 continue;
@@ -148,7 +148,7 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
 
             // If not, just replace values normally
             if arg.len() != 1{
-                exit_with_variant(format!("Argument at line {} can't be decoded.", real_line_number), ExitCode::BadCode, 6);
+                exit_with_variant(format!("Argument at line {} can't be decoded. (1)", real_line_number), ExitCode::BadCode, 1);
             }
 
             let arg = arg[0].clone();
@@ -171,7 +171,7 @@ pub fn replace_values_in_code(code: ValueGenResult) -> ValueReplResult{
                     "sp" => break,
                     _ => {
                         // The user probably misspelled.
-                        exit_with_variant(format!("\"{}\" in line {} is not a constant.", arg, real_line_number), ExitCode::BadCode, 6);
+                        exit_with_variant(format!("\"{}\" in line {} is not a constant. (6)", arg, real_line_number), ExitCode::BadCode, 2);
                     }
                 }
             }

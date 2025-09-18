@@ -86,14 +86,14 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     let mut value: Option<String> = None;
 
                     if first_value_token.is_none(){
-                        exit_with_variant(format!("Value of line {} can't be decoded. (2)", line_number), ExitCode::BadCode, 3);
+                        exit_with_variant(format!("Value of line {} can't be decoded. (2)", line_number), ExitCode::BadCode, 2);
                     }
 
                     // Try to do math operations
                     if first_value_token.unwrap() == "[" {
                         if line.iter().len() == 7{
                             if line.iter().nth(6).unwrap() != "]"{
-                                exit_with_variant(format!("Value of line {} can't be decoded. (3)", line_number), ExitCode::BadCode, 4);
+                                exit_with_variant(format!("Value of line {} can't be decoded. (3)", line_number), ExitCode::BadCode, 1);
                             }
 
                             let math_op = vec![line.iter().nth(3).unwrap().to_string(), line.iter().nth(4).unwrap().to_string(), line.iter().nth(5).unwrap().to_string()].join(" ");
@@ -101,7 +101,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                             let result_str = resolve_string(math_op, constants);
 
                             if result_str == "" {
-                                exit_with_variant(format!("Value of line {} can't be decoded. (4)", line_number), ExitCode::BadCode, 5);
+                                exit_with_variant(format!("Value of line {} can't be decoded. (4)", line_number), ExitCode::BadCode, 2);
                             }
 
                             value = Some(result_str);
@@ -115,7 +115,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                             if let Some(value_i32) = value_token.parse::<i32>().ok(){
                                 value = Some(value_i32.to_string());
                             } else {
-                                exit_with_variant(format!("Value of line {} can't be decoded. (5)", line_number), ExitCode::BadCode, 5);
+                                exit_with_variant(format!("Value of line {} can't be decoded. (5)", line_number), ExitCode::BadCode, 0);
                             }
                         } else if line.iter().len() == 4 {
                             let prefix = line.iter().nth(2).unwrap();
@@ -126,7 +126,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 16).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        exit_with_variant(format!("Value of line {} can't be decoded. The value is not in base 16", line_number), ExitCode::BadCode, 6);
+                                        exit(format!("Value of line {} can't be decoded. The value is not in base 16", line_number), ExitCode::BadCode);
                                     }
                                 }
 
@@ -134,7 +134,7 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 8).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        exit_with_variant(format!("Value of line {} can't be decoded. THe value is not in base 8.", line_number), ExitCode::BadCode, 7);
+                                        exit(format!("Value of line {} can't be decoded. THe value is not in base 8.", line_number), ExitCode::BadCode);
                                     }
                                 }
 
@@ -142,12 +142,12 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 2).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        exit_with_variant(format!("Value of line {} can't be decoded. The value is not in base 2.", line_number), ExitCode::BadCode, 8);
+                                        exit(format!("Value of line {} can't be decoded. The value is not in base 2.", line_number), ExitCode::BadCode);
                                     }
                                 }
 
                                 _ => {
-                                    exit_with_variant(format!("Value of line {} can't be decoded. (6)", line_number), ExitCode::BadCode, 9);
+                                    exit_with_variant(format!("Value of line {} can't be decoded. (6)", line_number), ExitCode::BadCode, 1);
                                 }
                             }
                         } else {

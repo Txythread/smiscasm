@@ -1,7 +1,7 @@
 # SMISCasm - Stupid Mixed Instruction Set Computer Assembly
 
 ## Introduction
-This project serves as an assembler and a linker for my SMISC (Stupid Mixed Insruction Set Computer) assembly language.
+This project serves as an assembler and a linker for my SMISC (Stupid Mixed Instruction Set Computer) assembly language.
 This language only serves one purpose: easy to implement (physically) while still allowing for complex instructions.
 
 ## Installation
@@ -10,7 +10,7 @@ To install smiscasm, smiscvm and smisc-connect all at once, execute the followin
 ```
 curl -s https://raw.githubusercontent.com/Txythread/smiscasm/master/install-smisc.sh | sh
 ```
-*This might ask you for your password. This is requrired to move binaries into `/usr/local/bin`. If you don't want to enter your password in someones script, you can do this manually. Hint: If you want to do this, take a look at `production.sh` or `build.sh` in each of the downloaded directories if you wish to proceed this way.*
+*This might ask you for your password. This is required to move binaries into `/usr/local/bin`. If you don't want to enter your password in someone's script, you can do this manually. Hint: If you want to do this, take a look at `production.sh` or `build.sh` in each of the downloaded directories if you wish to proceed this way.*
 
 ### Install smiscasm only
 First, pull the repo.
@@ -63,56 +63,56 @@ Memory Pages are 4096B in SMISC. To address a memory page, use label_in_said_pag
 There are 32 regs called x<sub>n</sub> where n is between 0 and 31.
 Some registers have special functionality or special naming.
 
-| NAME(S) | Description                      | Calling behaviour | VM-only |
-| ------- | -------------------------------- | ----------------- | ------- |
-| x0 | Normal | Argument, return value | No |
-| x1 | Normal | Argument, I/O | No |
-| x2 | Normal | Argument, I/O | No |
-| x3 | Normal | Argument, I/O | No |
-| x4 | Normal | Argument, I/O | No |
-| x5 | Normal | Argument, I/O | No |
-| x6 | Normal | Argument, I/O | No |
-| x7 | Normal | Argument, I/O | No |
-| x8 | Normal | No-change in function | No |
-| x9 | Normal | No-change in function | No |
-| x10 | Normal | No-change in function | No |
-| x11 | Normal | No-change in function | No |
-| x12 | Normal | No-change in function | No |
-| x13 | Normal | No-change in function | No |
-| x14 | Normal | No-change in function | No |
-| x15 | Normal | No-change in function | No |
-| x16 | Normal | Changed in function | No |
-| x17 | Normal | Changed in function | No |
-| x18 | Normal | Changed in function | No |
-| x19 | Normal | Changed in function | No |
-| x20 | Normal | Changed in function | No |
-| x21 | Normal | Changed in function | No |
-| x22 | Normal | Changed in function | No |
-| x23 | Normal | Changed in function | No |
-| x24 | Reserved | Undecided | No |
-| x25 | Reserved | Undecided | No |
-| x26 | Reserved | Undecided | No |
-| x27 | Reserved | Undecided | No |
-| x28 | Reserved | Undecided | No |
-| x29 | Reserved | Undecided | No |
-| x30 | Reserved | Undecided | No |
-| x31/sp | Stack Pointer; stores address of the lowest stack address | Reset at end | No |
-| N/A | Zero flag / Flag #1 | Changed | No |
-| N/A | Privileged Mode / Flag #2 | User specified | No |
-| N/A | Memory Address Pointer; the address the memory is loading | Changed | No |
-| N/A | Current Instruction | Changed | No |
-| N/A | Micro operation counter | Changed | No |
-| N/A | ALU arg 1; the first value of the ALU | Changed | No |
-| N/A | ALU arg 2; the second value of the ALU | Changed | No |
-| N/A | Program Counter; the address of the current/next instruction | Changed | No |
-| N/A | Standard transmitter contents; the contents the stdtrans will send when sending / has received | Changed | No |
-| N/A | Completed Clock Cycles; stored by VM for øIPC calculations | N/A | Yes |
-| N/A | Completed Instruction; stored by VM for øIPC calculations | N/A | Yes |
-| N/A | Halted; set by the vm when reset happens while op-counter contains 0 | N/A | Yes |
+| NAME(S) | Description                                                                                    | Calling behaviour      | VM-only |
+|---------|------------------------------------------------------------------------------------------------|------------------------|---------|
+| x0      | Normal                                                                                         | Argument, return value | No      |
+| x1      | Normal                                                                                         | Argument, I/O          | No      |
+| x2      | Normal                                                                                         | Argument, I/O          | No      |
+| x3      | Normal                                                                                         | Argument, I/O          | No      |
+| x4      | Normal                                                                                         | Argument, I/O          | No      |
+| x5      | Normal                                                                                         | Argument, I/O          | No      |
+| x6      | Normal                                                                                         | Argument, I/O          | No      |
+| x7      | Normal                                                                                         | Argument, I/O          | No      |
+| x8      | Normal                                                                                         | No-change in function  | No      |
+| x9      | Normal                                                                                         | No-change in function  | No      |
+| x10     | Normal                                                                                         | No-change in function  | No      |
+| x11     | Normal                                                                                         | No-change in function  | No      |
+| x12     | Normal                                                                                         | No-change in function  | No      |
+| x13     | Normal                                                                                         | No-change in function  | No      |
+| x14     | Normal                                                                                         | No-change in function  | No      |
+| x15     | Normal                                                                                         | No-change in function  | No      |
+| x16     | Normal                                                                                         | Changed in function    | No      |
+| x17     | Normal                                                                                         | Changed in function    | No      |
+| x18     | Normal                                                                                         | Changed in function    | No      |
+| x19     | Normal                                                                                         | Changed in function    | No      |
+| x20     | Normal                                                                                         | Changed in function    | No      |
+| x21     | Normal                                                                                         | Changed in function    | No      |
+| x22     | Normal                                                                                         | Changed in function    | No      |
+| x23     | Normal                                                                                         | Changed in function    | No      |
+| x24     | Reserved                                                                                       | Undecided              | No      |
+| x25     | Reserved                                                                                       | Undecided              | No      |
+| x26     | Reserved                                                                                       | Undecided              | No      |
+| x27     | Reserved                                                                                       | Undecided              | No      |
+| x28     | Reserved                                                                                       | Undecided              | No      |
+| x29     | Reserved                                                                                       | Undecided              | No      |
+| x30     | Reserved                                                                                       | Undecided              | No      |
+| x31/sp  | Stack Pointer; stores address of the lowest stack address                                      | Reset at end           | No      |
+| N/A     | Zero flag / Flag #1                                                                            | Changed                | No      |
+| N/A     | Privileged Mode / Flag #2                                                                      | User specified         | No      |
+| N/A     | Memory Address Pointer; the address the memory is loading                                      | Changed                | No      |
+| N/A     | Current Instruction                                                                            | Changed                | No      |
+| N/A     | Micro operation counter                                                                        | Changed                | No      |
+| N/A     | ALU arg 1; the first value of the ALU                                                          | Changed                | No      |
+| N/A     | ALU arg 2; the second value of the ALU                                                         | Changed                | No      |
+| N/A     | Program Counter; the address of the current/next instruction                                   | Changed                | No      |
+| N/A     | Standard transmitter contents; the contents the stdtrans will send when sending / has received | Changed                | No      |
+| N/A     | Completed Clock Cycles; stored by VM for øIPC calculations                                     | N/A                    | Yes     |
+| N/A     | Completed Instruction; stored by VM for øIPC calculations                                      | N/A                    | Yes     |
+| N/A     | Halted; set by the vm when reset happens while op-counter contains 0                           | N/A                    | Yes     |
 
 
 ### Immediate Values
-Immediate values are coded with **12b** (0...4096), 1 additional bit infront of that that represents the **sign** (everything is coded using two's complement). In assembly, an immediate value can be coded decimal, hexadecimal (when starting with 0x), octal (0o) or binary (0b).
+Immediate values are coded with **12b** (0...4096), 1 additional bit in front of that that represents the **sign** (everything is coded using two's complement). In assembly, an immediate value can be coded decimal, hexadecimal (when starting with 0x), octal (0o) or binary (0b).
 
 ### Labels
 Labels (or functions) start with their name followed by a colon. They can later be **used like a constant**, but they refer to their position in bytes instead of a user-set value.  
@@ -133,15 +133,15 @@ Comments are defined using a `'#'`. They exclude everything after themselves (pl
 
 ### Includes
 More source code from elsewhere can be included in a file using the `!include` command. 
-This command is then followed by either a file name from the same directory (`!include other_file.s`), an URL (`!include https://...`) or the name of a well-known library (`!include bscmath` (library not finished yet)). The include statement gets replaced with the code from the called file during assembly. Downloaded files will be stored for later in the pub-libs directory. Remove it if you want to re-download all sources.
+This command is then followed by either a file name from the same directory (`!include other_file.s`), a URL (`!include https://...`) or the name of a well-known library (`!include bscmath` (library not finished yet)). The include statement gets replaced with the code from the called file during assembly. Downloaded files will be stored for later in the pub-libs directory. Remove it if you want to re-download all sources.
 
 ## Coding New Instructions
 Instructions must be stored in the instructions directory (as they are included when smiscasm is getting compiled). 
 * The first line is the instruction's name as it's called in the code.
-* The second line is the format (such as (Register, Immediate Value) or (Register, Register) or () (None)). A x means a register, an i means an immediate value. * * Multiple functions with the same name but different formats can co-exist.
+* The second line is the format (such as (Register, Immediate Value) or (Register, Register) or () (None)). An x means a register, an i means an immediate value. * * Multiple functions with the same name but different formats can co-exist.
 * The third line is the address (only 8 bits). Please make sure it's unique.
 * Then (, after a recommended empty line, ) add the @STAGE command to get from stage 0 (which should be empty usually) to stage 1.
-* The following lines are just micro instructions. All the ones defined in `src/instruction/instruction.rs/OUTPUT_MAP_STRING` can be used for this and new ones can be added there. Seperate stages (for different clockcycles are defined with the @STAGE command. New versions of the same stage are defined with @VERSION. @ZF (zero flag) or @PM (privileged mode) can be used to make that version only apply when those flags are set.
+* The following lines are just micro instructions. All the ones defined in `src/instruction/instruction.rs/OUTPUT_MAP_STRING` can be used for this and new ones can be added there. Separate stages (for different clock cycles) are defined with the @STAGE command. New versions of the same stage are defined with @VERSION. @ZF (zero flag) or @PM (privileged mode) can be used to make that version only apply when those flags are set.
 
 ## Generating Instruction Tables
 Instruction tables contain data to write to EEPROMs or flash chips (or any persistent storage for that matter) from the CPU's CU to decode the commands.
@@ -156,8 +156,8 @@ To run *smiscasm* with its standard functionality (assembling & linking), just r
 ```smiscasm my_code.s```
 
 ## Exit Codes
-`smiscasm` has seperate exit codes for different kinds of errors.  
-Additionally, rusts typical *101* might also appear (in which case, try rebuilding using *production.sh* in case you used *build.sh* previously, not at all guarenteed to work though).
+`smiscasm` has separate exit codes for different kinds of errors.  
+Additionally, rusts typical *101* might also appear (in which case, try rebuilding using *production.sh* in case you used *build.sh* previously, not at all guaranteed to work though).
 
 | CODE | KIND        | DESCRIPTION                                                               |  
 |------|-------------|---------------------------------------------------------------------------|  
@@ -168,7 +168,7 @@ Additionally, rusts typical *101* might also appear (in which case, try rebuildi
 | x98  | Other       | Uncategorized error                                                       |
 | x99  | Internal    | Internal issue; sorry. Please file a report                               |
 
-The x means 1...9, usually it'll be a **1**. The other numbers are only there for debugging in case one issue might arise from different points in the code.
+*The x means 0...2, usually it'll be a **1**. The other numbers are only there for debugging in case the same issue might arise from different points in the code.*
 
 ## Further Info
 Run smiscasm with the `--help` flag for more info.  
