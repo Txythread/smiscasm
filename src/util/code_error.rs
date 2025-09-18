@@ -43,8 +43,10 @@ pub fn display_code_error(kind: ErrorNotificationKind, line: i32, column: Option
         if let Some(underlined_length) = underlined_length {
             let mut underline_string = "".to_string();
 
-            for _ in 0..underlined_length-1 {
-                underline_string += "~";
+            if underlined_length > 0 {
+                for _ in 0..underlined_length-1 {
+                    underline_string += "~";
+                }
             }
 
             hint_string += underline_string.as_str();

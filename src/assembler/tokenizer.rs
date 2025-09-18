@@ -1,13 +1,19 @@
 use crate::util::exit::{exit, ExitCode};
+use crate::util::line_mapping::LineMap;
 
 /// Split lines into tokens
-pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
+pub fn tokenize(input: Vec<String>, input_line_map: LineMap) -> (Vec<Vec<String>>, LineMap) {
+    let mut output_line_map: LineMap = LineMap::new();
+    output_line_map.warnings_count = input_line_map.warnings_count;
+    output_line_map.errors_count = input_line_map.errors_count;
+
     // The remaining spaces always start a new token, but are themselves to be ignored.
     // '.',  '@',  ':',  '0x',  '0b', '0o'  '[',  ']',  '(',  ')',  ',',  '<',  '>',  '+',   '*',  '/',  '&'  &  '%'
     // also separate strings into tokens (except when in string/char literals), but also serve as tokens themselves.
 
     let mut all_tokens: Vec<Vec<String>> = vec![];
     let mut current_line_tokens: Vec<String> = vec![];
+    let mut current_line_token_map: Vec<(u32, u32)> = vec![];
 
     // Having more than two characters is not allowed
     let token_markers = [".".to_string(), "@".to_string(), ":".to_string(), "0x".to_string(), "0b".to_string(), "0o".to_string(), "[".to_string(), "]".to_string(), "(".to_string(), ")".to_string(), "<".to_string(), ">".to_string(), ",".to_string(), "+".to_string(), "*".to_string(), "/".to_string(), "%".to_string(), "&".to_string()];
@@ -20,17 +26,24 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
         let mut last_character: char = 'x';
         let mut current_token: String = String::new();
         let mut in_string_literal = false;
+        let mut current_token_start = 0;
 
+        let mut current_char_count = -1;
         for i in line.chars().enumerate() {
             let char = i.1.clone();
+            current_char_count += 1;
 
             if !in_string_literal {
                 // Check for whitespaces, especially \t and ' '
                 if char == ' ' || char == '\t' {
-                    if current_token.is_empty()/*current_token == ""*/ {
+                    if current_token.is_empty() {
                         //current_line_tokens.push(current_token.clone());
                         current_token = String::new();
+                        current_token_start = current_char_count + 1;
                     } else {
+                        current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
+                        current_token_start = current_char_count + 1;
+
                         current_line_tokens.push(current_token.clone());
                         current_token = String::new();
                     }
@@ -46,9 +59,15 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
                             "sp" => { current_token = "x31".to_string() },
                             _ => { /* Nothing to change */}
                         }
+                        current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
+                        current_token_start = current_char_count;
+
                         current_line_tokens.push(current_token.clone());
                         current_token = String::new();
                     }
+                    current_line_token_map.push((current_token_start as u32, 1u32));
+                    current_token_start = current_char_count + 1;
+
                     current_line_tokens.push(char.to_string());
                     last_character = char;
                     continue;
@@ -60,10 +79,16 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
                         // Remove the duplicate char
                         current_token.remove(current_token.len() - 1);
                         if !current_token.is_empty() {
+                            current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
+                            current_token_start = current_char_count;
+
                             current_line_tokens.push(current_token.clone());
                             current_token = String::new();
                         }
                     }
+                    current_line_token_map.push((current_token_start as u32, 2u32));
+                    current_token_start = current_char_count + 1;
+
                     current_line_tokens.push(last_character.to_string() + char.to_string().as_str());
                     last_character = char;
                     continue;
@@ -78,14 +103,28 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
                         exit(format!("String or character literal at line {} is empty", line_number).to_string(), ExitCode::BadCode);
                     }
                     // Add the current token & the ''' or the '"'.
+                    current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
+                    current_token_start = current_char_count;
+
                     current_line_tokens.push(current_token.clone());
                     current_token = String::new();
+
+
+                    current_line_token_map.push((current_token_start as u32, 1u32));
+                    current_token_start = current_char_count;
+
                     current_line_tokens.push(char.to_string());
                 } else {
                     if !current_token.is_empty() {
+                        current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
+                        current_token_start = current_char_count;
+
                         current_line_tokens.push(current_token.clone());
                         current_token = String::new();
                     }
+                    current_line_token_map.push((current_token_start as u32, 1u32));
+                    current_token_start = current_char_count + 1;
+
                     current_line_tokens.push(char.to_string());
                 }
 
@@ -104,21 +143,34 @@ pub fn tokenize(input: Vec<String>) -> Vec<Vec<String>> {
         }
 
         if !current_token.is_empty() {
+            current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
+            current_token_start = current_char_count + 1;
+
             current_line_tokens.push(current_token.clone());
         }
 
         if !current_line_tokens.is_empty() {
+            // Handle line in input map
+            let mut line_in_input_map = input_line_map.lines[line_number].clone();
+
+            // Add the token mapping
+            line_in_input_map.token_info = current_line_token_map.clone();
+            current_line_token_map = vec![];
+
+            output_line_map.add_line(line_in_input_map);
+
             all_tokens.push(current_line_tokens.clone());
             current_line_tokens = Vec::new();
         }
     }
 
-    all_tokens
+    (all_tokens, output_line_map)
 }
 
 #[cfg(test)]
 mod tests {
     use crate::assembler::tokenizer::tokenize;
+    use crate::util::line_mapping::{LineInfo, LineMap};
 
     #[test]
     fn test_tokenize() {
@@ -178,7 +230,13 @@ mod tests {
             vec![".", "msg_end", "[", "$", "-", "1", "]"]
         ];
 
-        let result = tokenize(input);
+
+        let mut line_map = LineMap::new();
+
+        for i in 0..100{
+            line_map.add_line(LineInfo::new_no_info("".to_string(), i));
+        }
+        let result = tokenize(input, line_map).0;
 
         for i in 0..result.len(){
             for j in 0..expected[i].len(){

@@ -73,7 +73,7 @@ impl LineMap{
 pub struct LineInfo {
     contents: String,           // The contents (without leading & trailing whitespaces)
     indent: u32,                // The indent (in spaces) this line has (for formatting)
-    token_info: Vec<(u32, u32)>,// The start of a token and its length
+    pub token_info: Vec<(u32, u32)>,// The start of a token and its length
     line_number: u32,           // The original line number
 }
 
