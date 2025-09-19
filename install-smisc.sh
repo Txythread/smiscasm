@@ -122,11 +122,10 @@ read -r -p "Do you want to remove the installation folders (n if you want to mod
 case "$response" in
     [yY][eE][sS]|[yY]) 
         sudo rm -r smiscasm
-		sudo rm -r smiscvm
-  		sudo rm -r smisc-connect
+        sudo rm -r smiscvm
+        sudo rm -r smisc-connect
         ;;
     *)
-        
         ;;
 esac
 
