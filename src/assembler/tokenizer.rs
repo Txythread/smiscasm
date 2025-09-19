@@ -1,6 +1,4 @@
-use std::io::ErrorKind;
 use crate::util::code_error::{display_code_error, ErrorNotificationKind};
-use crate::util::exit::{exit, ExitCode};
 use crate::util::line_mapping::LineMap;
 
 /// Split lines into tokens

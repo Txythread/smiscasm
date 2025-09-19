@@ -8,7 +8,6 @@ use crate::help::help::{print_help, print_instruction_help};
 use std::fs::File;
 use std::io::prelude::*;
 use crate::util::exit::{exit, ExitCode};
-use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 
 mod util;
 mod instruction;

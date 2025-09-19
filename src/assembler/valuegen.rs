@@ -1,11 +1,18 @@
 use std::i32;
+use crate::util::code_error::ErrorNotificationKind;
 use crate::util::replacement::Replacement;
 use crate::util::math::resolve_string;
 use crate::util::exit::{exit, exit_with_variant, ExitCode};
+use crate::util::line_mapping::LineMap;
 
 /// Find global constant declarations and labels (function definitions) in code and separate them.
-pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
+pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenResult, LineMap){
     let mut result = ValueGenResult{ constants: vec![], sections: vec![], code: vec![], line_mapping: vec![] };
+    let mut output_line_map = LineMap::new();
+    output_line_map.errors_count = input_line_map.errors_count;
+    output_line_map.warnings_count = input_line_map.warnings_count;
+
+    let mut input_line_map = input_line_map;
 
     let bytes_per_command = 4; // 32 bit
 
@@ -27,17 +34,20 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
             let command = line.iter().nth(1);
 
             if command.is_none() {
-                exit(format!("Assembler command at line {} lacks command, variable or constant name.", line_number), ExitCode::BadCode);
+                input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(0), "Unused assembler command".to_string(), "Expected assembler command or constant name after \".\".".to_string());
+                continue;
             }
 
-            match command.unwrap().as_str() {
+            match command.cloned().unwrap().clone().as_str() {
                 "section" => {
                     if line.len() != 5 {
-                        exit(format!("Section naming at line {} can't be read.", line_number), ExitCode::BadCode);
+                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and section are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), "The compiler command \"section\" requires a string as an argument, but no string was found.".to_string());
+                        continue;
                     }
 
                     if line[2] != "\"" || line[4] != "\""{
-                        exit(format!("Section naming at line {} can't be read. String expected.", line_number), ExitCode::BadCode);
+                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and section are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), "The compiler command \"section\" requires a string as an argument, but no string was found.".to_string());
+                        continue;
                     }
 
                     let name = line[3].clone();
@@ -48,7 +58,8 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
 
                 "ascii" | "stc" => {
                     if line.len() != 5{
-                        exit(format!("Ascii or stc in line {} can't be decoded. (1)", line_number), ExitCode::BadCode);
+                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and section are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The compiler command \"{}\" requires a string as an argument, but no string was found.", command.unwrap() /*ascii or stc*/).to_string());
+                        continue;
                     }
 
                     let first_quote = line.iter().nth(2).unwrap();
@@ -56,7 +67,8 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     let second_quote = line.iter().nth(4).unwrap();
 
                     if first_quote != "\"" || second_quote != "\"" {
-                        exit(format!("String expected for ASCII/STC decoding, but no string found in line {}.", line_number), ExitCode::BadCode);
+                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and section are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The compiler command \"{}\" requires a string as an argument, but no string was found.", command.unwrap() /*ascii or stc*/).to_string());
+                        continue;
                     }
 
                     // Increment the byte counter
@@ -72,7 +84,8 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
 
                 "global" => {
                     if line.len() != 3{
-                        exit(format!("Call to global method in line {} has incorrect format.", line_number), ExitCode::BadCode);
+                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and global are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The compiler command \"{}\" requires a variable name but this was found instead.", command.unwrap() /*ascii or stc*/).to_string());
+                        continue;
                     }
                     let global_variable_name = line[2].clone();
                     global_constants_names.push(global_variable_name.clone());
@@ -86,14 +99,16 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                     let mut value: Option<String> = None;
 
                     if first_value_token.is_none(){
-                        exit_with_variant(format!("Value of line {} can't be decoded. (2)", line_number), ExitCode::BadCode, 2);
+                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 0 /* start at the .*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("Can't create constant named \"{}\" without a value.", command.cloned().unwrap() /*ascii or stc*/).to_string());
+                        continue;
                     }
 
                     // Try to do math operations
                     if first_value_token.unwrap() == "[" {
                         if line.iter().len() == 7{
                             if line.iter().nth(6).unwrap() != "]"{
-                                exit_with_variant(format!("Value of line {} can't be decoded. (3)", line_number), ExitCode::BadCode, 1);
+                                input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be read.", command.cloned().unwrap() /*ascii or stc*/).to_string());
+                                continue;
                             }
 
                             let math_op = vec![line.iter().nth(3).unwrap().to_string(), line.iter().nth(4).unwrap().to_string(), line.iter().nth(5).unwrap().to_string()].join(" ");
@@ -101,7 +116,8 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                             let result_str = resolve_string(math_op, constants);
 
                             if result_str == "" {
-                                exit_with_variant(format!("Value of line {} can't be decoded. (4)", line_number), ExitCode::BadCode, 2);
+                                input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and section are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be calculated.", command.cloned().unwrap() /*ascii or stc*/).to_string());
+                                continue;
                             }
 
                             value = Some(result_str);
@@ -115,7 +131,8 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                             if let Some(value_i32) = value_token.parse::<i32>().ok(){
                                 value = Some(value_i32.to_string());
                             } else {
-                                exit_with_variant(format!("Value of line {} can't be decoded. (5)", line_number), ExitCode::BadCode, 0);
+                                input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be decoded as a base-10 integer value.", command.cloned().unwrap()).to_string());
+                                continue;
                             }
                         } else if line.iter().len() == 4 {
                             let prefix = line.iter().nth(2).unwrap();
@@ -126,7 +143,8 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 16).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        exit(format!("Value of line {} can't be decoded. The value is not in base 16", line_number), ExitCode::BadCode);
+                                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be decoded as a hexadecimal integer value.", command.cloned().unwrap()).to_string());
+                                        continue;
                                     }
                                 }
 
@@ -134,7 +152,8 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 8).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        exit(format!("Value of line {} can't be decoded. THe value is not in base 8.", line_number), ExitCode::BadCode);
+                                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be decoded as an octal integer value.", command.cloned().unwrap()).to_string());
+                                        continue;
                                     }
                                 }
 
@@ -142,16 +161,19 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
                                     if let Some(value_i32) = i32::from_str_radix(number, 2).ok(){
                                         value = Some(value_i32.to_string());
                                     } else {
-                                        exit(format!("Value of line {} can't be decoded. The value is not in base 2.", line_number), ExitCode::BadCode);
+                                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be decoded as a binary integer value.", command.cloned().unwrap()).to_string());
+                                        continue;
                                     }
                                 }
 
                                 _ => {
-                                    exit_with_variant(format!("Value of line {} can't be decoded. (6)", line_number), ExitCode::BadCode, 1);
+                                    input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be decoded.", command.cloned().unwrap()).to_string());
+                                    continue;
                                 }
                             }
                         } else {
-                            exit_with_variant(format!("Value of line {} can't be decoded. (7)", line_number), ExitCode::BadCode, 1);
+                            input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be decoded.", command.cloned().unwrap()).to_string());
+                            continue;
                         }
                     }
 
@@ -197,12 +219,16 @@ pub fn gen_values(code: Vec<Vec<String>>) -> ValueGenResult{
         let line_number_in_result = result.code.len() - 1;
         result.line_mapping.push((line_number_in_result, line_number));
 
+        // Copy the input map's info to the output map
+        let line_info_input = input_line_map.lines[line_number].clone();
+        output_line_map.add_line(line_info_input);
+
         bytes_count += bytes_per_command;
     }
 
 
 
-    result
+    (result, output_line_map)
 }
 
 pub struct ValueGenResult{
@@ -215,6 +241,7 @@ pub struct ValueGenResult{
 #[cfg(test)]
 mod tests{
     use crate::assembler::valuegen::gen_values;
+    use crate::util::line_mapping::{LineInfo, LineMap};
     use crate::util::replacement::Replacement;
 
     #[test]
@@ -256,31 +283,37 @@ mod tests{
 
         let expected_line_mapping = vec![(0, 7), (1, 10)];
 
-        let result = gen_values(data);
+        let mut line_map = LineMap::new();
 
-        assert_eq!(result.constants.len(), expected_constants.len());
-        assert_eq!(result.code.len(), expected_code.len());
-        assert_eq!(result.line_mapping.len(), expected_line_mapping.len());
-        assert_eq!(result.sections.len(), expected_sections.len());
+        for _ in 0..100{
+            line_map.add_line(LineInfo::new_no_info("".to_string(), 0))
+        }
+
+        let result = gen_values(data, line_map);
+
+        assert_eq!(result.0.constants.len(), expected_constants.len());
+        assert_eq!(result.0.code.len(), expected_code.len());
+        assert_eq!(result.0.line_mapping.len(), expected_line_mapping.len());
+        assert_eq!(result.0.sections.len(), expected_sections.len());
 
 
         for i in 0..expected_constants.len(){
-            assert_eq!(result.constants[i], expected_constants[i]);
+            assert_eq!(result.0.constants[i], expected_constants[i]);
         }
 
         for i in 0..expected_code.len(){
-            assert_eq!(result.code[i].len(), expected_code[i].len());
+            assert_eq!(result.0.code[i].len(), expected_code[i].len());
             for j in 0..expected_code[i].len(){
-                assert_eq!(result.code[i][j], expected_code[i][j]);
+                assert_eq!(result.0.code[i][j], expected_code[i][j]);
             }
         }
 
         for i in 0..expected_line_mapping.len(){
-            assert_eq!(result.line_mapping[i], expected_line_mapping[i]);
+            assert_eq!(result.0.line_mapping[i], expected_line_mapping[i]);
         }
 
-        for i in 0..result.sections.len(){
-            assert_eq!(result.sections[i], expected_sections[i]);
+        for i in 0..result.0.sections.len(){
+            assert_eq!(result.0.sections[i], expected_sections[i]);
         }
 
     }

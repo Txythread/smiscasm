@@ -1,7 +1,6 @@
 // This is a help file for finding the correct line in the original file
 // from another file in a later phase of assembly.
 
-use std::collections::HashMap;
 use termimad::crossterm::style::Stylize;
 use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 
@@ -32,7 +31,6 @@ impl LineMap{
             },
             ErrorNotificationKind::Error => {
                 self.errors_count += 1;
-                println!("increased errors");
             }
         }
 
@@ -55,6 +53,46 @@ impl LineMap{
                 let token = token.clone();
 
                 display_code_error(kind, line_info.line_number as i32, Some(token.0), Some(token.1), title, message, code);
+                return;
+            }
+        }
+
+        display_code_error(kind.clone(), line_info.line_number as i32, None, None, title, message, code);
+    }
+
+
+    /// Output a warning/error with multiple tokens underlined
+    pub fn print_notification_multiple_faulty_tokens(&mut self, kind: ErrorNotificationKind, line_number_in_current: u32, start_token_number: u32, end_token_number: u32, title: String, message: String) {
+        match kind {
+            ErrorNotificationKind::Warning => {
+                self.warnings_count += 1;
+            },
+            ErrorNotificationKind::Error => {
+                self.errors_count += 1;
+            }
+        }
+
+
+
+        let line_info = self.lines[line_number_in_current as usize].clone();
+
+        let mut code: Vec<String> = vec![];
+
+        // Create newlines except for the last (current) line
+
+        for _ in 0..line_info.line_number{
+            code.push(String::new());
+        }
+
+        code.push(line_info.contents);
+        if let Some(start_token) = line_info.token_info.iter().nth(start_token_number as usize){
+            if let Some(end_token) = line_info.token_info.iter().nth(end_token_number as usize){
+                let start_token = start_token.clone();
+                let end_token = end_token.clone();
+                let end_token_end = end_token.0 + end_token.1;
+                let length = end_token_end - start_token.0;
+                // Start the underlined part with the start position of the start token and end it with the stop position of the end token (which is its start pos + its length).
+                display_code_error(kind, line_info.line_number as i32, Some(start_token.0), Some(length), title, message, code);
                 return;
             }
         }

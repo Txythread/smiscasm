@@ -6,7 +6,6 @@ use crate::assembler::valuerepl::{replace_values_in_code, ValueReplResult};
 use crate::assembler::ya_tokenizer::{tokenize_ya_time, YATokenizerResult};
 use crate::assembler::zstep::perform_last_step;
 use crate::instruction::instruction::Instruction;
-use crate::util::code_error::ErrorNotificationKind;
 
 /// The size of the memory page and the max size for immediate values.
 pub const MEMORY_PAGE_SIZE: usize = 4096;
@@ -22,8 +21,10 @@ pub async fn assemble(code: String, instructions: Vec<Instruction>) -> Vec<u8> {
     let mut tokenized = tokenize(preprocessed.0, preprocessed.1);
     tokenized.1.exit_if_needed();
 
-    let value_gen_result: ValueGenResult = gen_values(tokenized.0);
-    let value_repl_result: ValueReplResult = replace_values_in_code(value_gen_result);
+    let mut value_gen_result = gen_values(tokenized.0, tokenized.1);
+    value_gen_result.1.exit_if_needed();
+
+    let value_repl_result: ValueReplResult = replace_values_in_code(value_gen_result.0);
     let tokenized: YATokenizerResult = tokenize_ya_time(value_repl_result);
     let binary: Vec<u8> = perform_last_step(tokenized, instructions);
 

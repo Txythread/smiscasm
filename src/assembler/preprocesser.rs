@@ -59,7 +59,7 @@ pub async fn preprocess(code: String, input_line_map: LineMap) -> (Vec<String>, 
 }
 
 
-
+/*
 #[cfg(test)]
 mod tests {
     use crate::assembler::preprocesser::preprocess;
@@ -123,4 +123,4 @@ msg:\n\
             assert_eq!(preprocessed_code.await.0[i].clone(), expected_result[i]);
         }
     }*/
-}
+}*/
