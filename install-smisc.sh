@@ -118,17 +118,17 @@ fi
 echo "smisc-connect compiled"
 
 # Remove the leftovers if requested.
-read -r -p "Do you want to remove the installation folders (n if you want to modify the programm)? [y/N] " response
+printf "Do you want to remove the installation folders (n if you want to modify the program)? [y/N] "
+read -r response </dev/tty
 case "$response" in
-    [yY][eE][sS]|[yY]) 
+    ([yY][eE][sS]|[yY]) 
         sudo rm -r smiscasm
         sudo rm -r smiscvm
         sudo rm -r smisc-connect
         ;;
-    *)
+    (*) 
         ;;
 esac
 
-
-
+wait $!
 echo "Done!"
