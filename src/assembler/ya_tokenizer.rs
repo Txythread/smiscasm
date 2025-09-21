@@ -3,34 +3,28 @@ use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::util::replacement::Replacement;
 use crate::assembler::valuerepl::{LineKind, ValueReplResult};
 use crate::assembler::ya_tokenizer::InstructionArgs::{Global, Immediate, Register};
-use crate::util::exit::{exit, exit_with_variant, ExitCode};
+use crate::util::code_error::ErrorNotificationKind;
+use crate::util::line_mapping::LineMap;
 
 // Yet another tokenizer
 /// Tokenizes ValueReplResult into YATokenizerResult
-pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
+pub fn tokenize_ya_time(from: ValueReplResult, mut input_line_map: LineMap) -> YATokenizerResult {
     let mut result = YATokenizerResult {
         code: vec![],
         global_constants: vec![],
         sections: from.sections.clone(),
         line_mapping: from.line_mapping.clone(),
     };
+    let mut output_line_map = LineMap::new();
+    output_line_map.errors_count = input_line_map.errors_count;
+    output_line_map.warnings_count = input_line_map.warnings_count;
 
     // Copy all global constants
     result.global_constants = from.global_constants.clone().iter().filter(|&x| x.get_is_global() || x.get_is_function()).map(|x| x.clone()).collect();
 
     // Go through all the lines
-    for i in from.code.iter().enumerate() {
+    'line_loop: for i in from.code.iter().enumerate() {
         let line_number = i.0;
-
-        // Get real line number
-        let real_line_number = from.line_mapping.iter().find(| &&x | x.0 == line_number);
-
-        if real_line_number.is_none() {
-            exit_with_variant(format!("Internal error with line mapping likely caused by \"valuegen\" or \"valuerepl\"., the line number in it's resulting code is: {}.", line_number), ExitCode::Internal, 2);
-        }
-
-        let real_line_number = real_line_number.unwrap().1;
-
 
         let line = i.1.clone();
         let kind = line.1.clone();
@@ -78,22 +72,23 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
                 let name = code[0].clone();
 
                 let mut args: Vec<InstructionArgs> = vec![];
+                let mut current_token_index = 1u32;
                 for token in code[1..].iter() {
+                    current_token_index += 1;
                     // If it can be passed immediately, it's just an immediate value.
-                    if let Some(value) = token.parse::<i32>().ok(){
+                    if let Some(value) = token.parse::<i32>().ok() {
                         if value.abs() > MEMORY_PAGE_SIZE as i32 {
-                            exit(format!("The value in line {} can't fit into the range of an immediate value (-{}...{})", real_line_number, MEMORY_PAGE_SIZE, MEMORY_PAGE_SIZE - 1), ExitCode::BadCode);
-                        }else {
-                            // Correct the format
-                            // Choose last 12 bits
-                            let mut immediate_value: u16 = (value & 0x00_00_0F_FF) as u16;
-
-                            if value.is_negative() {
-                                immediate_value = immediate_value | 0x00_00_10_00;
-                            }
-
-                            args.push(Immediate(immediate_value));
+                            input_line_map.print_notification(ErrorNotificationKind::Error, line_number as u32, Some(current_token_index), "Value Outside Of Immediate Range".to_string(), format!("Value of {} decimal is not in the range of an immediate value ({} decimal to {} decimal).", value, -(MEMORY_PAGE_SIZE as isize), MEMORY_PAGE_SIZE - 1));
                         }
+                        // Correct the format
+                        // Choose last 12 bits
+                        let mut immediate_value: u16 = (value & 0x00_00_0F_FF) as u16;
+
+                        if value.is_negative() {
+                            immediate_value = immediate_value | 0x00_00_10_00;
+                        }
+
+                        args.push(Immediate(immediate_value));
                         continue;
                     }
 
@@ -105,7 +100,8 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
                     if first_char == 'x'{
                         if let Some(value) = token_except_first_char.parse::<i32>().ok(){
                             if value > 31 || value < 0 {
-                                exit(format!("Register number {} doesn't exist but was called at {}.", value, real_line_number), ExitCode::BadCode);
+                                input_line_map.print_notification(ErrorNotificationKind::Error, line_number as u32, Some(current_token_index - 1), "Unknown Register".to_string(), format!("No such register: \"{}\". Known registers include x0...x31 and sp (which links to x31).", token));
+                                continue 'line_loop;
                             }
 
 
@@ -118,6 +114,8 @@ pub fn tokenize_ya_time(from: ValueReplResult) -> YATokenizerResult {
                     args.push(Global(token.clone()));
                 }
 
+                let line = input_line_map.lines[line_number].clone();
+                output_line_map.add_line(line);
                 result.code.push(Line::Instruction(name, args.clone()));
             }
         }
@@ -153,6 +151,7 @@ mod tests {
     use crate::assembler::valuerepl::{LineKind, ValueReplResult};
     use crate::assembler::ya_tokenizer::{tokenize_ya_time, InstructionArgs, Line};
     use crate::assembler::ya_tokenizer::YATokenizerResult;
+    use crate::util::line_mapping::{LineInfo, LineMap};
     use crate::util::replacement::Replacement;
 
     #[test]
@@ -197,7 +196,13 @@ mod tests {
             Line::ASCII("Hi".to_string()),
         ];
 
-        let result: YATokenizerResult = tokenize_ya_time(input);
+        let mut line_map = LineMap::new();
+
+        for i in 0..101{
+            line_map.add_line(LineInfo::new("as as as s".to_string(), 0, vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ], i))
+        }
+
+        let result: YATokenizerResult = tokenize_ya_time(input, line_map);
         let output_code = result.code.clone();
 
         assert_eq!(output_code.len(), expected_output_code.len());

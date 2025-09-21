@@ -3,6 +3,7 @@
 main:
 	# line 5 should fail
 	sdt x0, x4
+	add x34, x33
 
 !include debuglib
 .
