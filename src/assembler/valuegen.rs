@@ -2,7 +2,6 @@ use std::i32;
 use crate::util::code_error::ErrorNotificationKind;
 use crate::util::replacement::Replacement;
 use crate::util::math::resolve_string;
-use crate::util::exit::{exit, exit_with_variant, ExitCode};
 use crate::util::line_mapping::LineMap;
 
 /// Find global constant declarations and labels (function definitions) in code and separate them.
@@ -77,7 +76,14 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
                     // Add only '.', 'ascii' and the text back, not the surrounding quotes.
                     result.code.push(vec![first_token.unwrap().to_string(), command.unwrap().to_string(), text.to_string()]);
 
-                    // Add the correct line mapping
+                    // Add the correct line mapping and remove the " " as separate tokens
+                    let mut line = input_line_map.lines[line_number].clone();
+                    let start = line.token_info[2].0;
+                    let end = line.token_info[4].0;
+                    line.token_info.remove(2); line.token_info.remove(2); line.token_info.remove(2); // Remove the tokens after .ascii
+                    line.token_info.push((start, end));
+                    output_line_map.add_line(line);
+
                     let line_number_in_result = result.code.len() - 1;
                     result.line_mapping.push((line_number_in_result, line_number));
                 }
@@ -172,7 +178,7 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
                                 }
                             }
                         } else {
-                            input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be decoded.", command.cloned().unwrap()).to_string());
+                            input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2 /* both . and name are fine*/, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), format!("The value of the constant named \"{}\" couldn't be decoded. Format not understood.", command.cloned().unwrap()).to_string());
                             continue;
                         }
                     }
@@ -285,8 +291,8 @@ mod tests{
 
         let mut line_map = LineMap::new();
 
-        for _ in 0..100{
-            line_map.add_line(LineInfo::new_no_info("".to_string(), 0))
+        for i in 0..100{
+            line_map.add_line(LineInfo::new("as as as as".to_string(), 0, vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ], i))
         }
 
         let result = gen_values(data, line_map);
