@@ -57,7 +57,7 @@ impl LineMap{
             }
         }
 
-        display_code_error(kind.clone(), line_info.line_number as i32, None, None, title, message, code);
+        display_code_error(kind.clone(), line_info.line_number as i32, None, None, title, message + "\n", code);
     }
 
 
@@ -92,7 +92,7 @@ impl LineMap{
                 let end_token_end = end_token.0 + end_token.1;
                 let length = end_token_end - start_token.0;
                 // Start the underlined part with the start position of the start token and end it with the stop position of the end token (which is its start pos + its length).
-                display_code_error(kind, line_info.line_number as i32, Some(start_token.0), Some(length), title, message, code);
+                display_code_error(kind, line_info.line_number as i32, Some(start_token.0), Some(length), title, message + "\n", code);
                 return;
             }
         }
@@ -102,8 +102,25 @@ impl LineMap{
 
     pub fn exit_if_needed(&mut self){
         if self.stop_after_step{
-            println!("{}", format!("Assembling failed with {} errors and {} warnings", self.errors_count, self.warnings_count).red().to_string());
+            eprintln!("{}", format!("Assembling failed with {} errors and {} warnings", self.errors_count, self.warnings_count).red().to_string());
             std::process::exit(105);
+        }
+    }
+
+    // Summarize the compilation (show amount of errors & warnings and exit if needed)
+    pub fn summarize(&self){
+        if self.errors_count > 0 || self.warnings_count > 0 {
+            // Create info
+            let info = format!("Assembling failed with {} errors and {} warnings", self.errors_count, self.warnings_count);
+
+            // Print info in colors and exit if needed.
+            if self.errors_count > 0{
+                println!("{}", info.red().bold());
+                std::process::exit(105);
+            } else {
+                // Still some warnings
+                println!("{}", info.yellow().bold());
+            }
         }
     }
 }

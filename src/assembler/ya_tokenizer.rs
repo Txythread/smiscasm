@@ -8,7 +8,7 @@ use crate::util::line_mapping::LineMap;
 
 // Yet another tokenizer
 /// Tokenizes ValueReplResult into YATokenizerResult
-pub fn tokenize_ya_time(from: ValueReplResult, mut input_line_map: LineMap) -> YATokenizerResult {
+pub fn tokenize_ya_time(from: ValueReplResult, mut input_line_map: LineMap) -> (YATokenizerResult, LineMap) {
     let mut result = YATokenizerResult {
         code: vec![],
         global_constants: vec![],
@@ -16,8 +16,6 @@ pub fn tokenize_ya_time(from: ValueReplResult, mut input_line_map: LineMap) -> Y
         line_mapping: from.line_mapping.clone(),
     };
     let mut output_line_map = LineMap::new();
-    output_line_map.errors_count = input_line_map.errors_count;
-    output_line_map.warnings_count = input_line_map.warnings_count;
 
     // Copy all global constants
     result.global_constants = from.global_constants.clone().iter().filter(|&x| x.get_is_global() || x.get_is_function()).map(|x| x.clone()).collect();
@@ -123,7 +121,13 @@ pub fn tokenize_ya_time(from: ValueReplResult, mut input_line_map: LineMap) -> Y
             }
         }
     }
-    result
+
+
+    output_line_map.errors_count = input_line_map.errors_count;
+    output_line_map.warnings_count = input_line_map.warnings_count;
+
+
+    (result, output_line_map)
 }
 
 pub struct YATokenizerResult {
@@ -205,8 +209,8 @@ mod tests {
             line_map.add_line(LineInfo::new("as as as s".to_string(), 0, vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ], i))
         }
 
-        let result: YATokenizerResult = tokenize_ya_time(input, line_map);
-        let output_code = result.code.clone();
+        let result = tokenize_ya_time(input, line_map);
+        let output_code = result.0.code.clone();
 
         assert_eq!(output_code.len(), expected_output_code.len());
 

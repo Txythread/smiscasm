@@ -41,8 +41,6 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
         // Strip the !include to arrive at the file name
         let inclusion_argument = line.strip_prefix("!include").unwrap().trim().to_string();
 
-        println!("Trying to find library: {}", inclusion_argument);
-
 
         // Look if the file exists.
         if let Some(file) = expand_path(inclusion_argument.as_str()) {

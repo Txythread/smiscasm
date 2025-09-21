@@ -15,8 +15,6 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
 
     // Generate the new line mapping for the output
     let mut output_line_mapping: LineMap = LineMap::new();
-    output_line_mapping.warnings_count = input_line_mapping.warnings_count;
-    output_line_mapping.errors_count = input_line_mapping.errors_count;
 
     result.global_constants = code.constants.clone();
     result.sections = code.sections.clone();
@@ -291,6 +289,9 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
         result.line_mapping.push((0, 0));
     }
 
+
+    output_line_mapping.warnings_count = input_line_mapping.warnings_count;
+    output_line_mapping.errors_count = input_line_mapping.errors_count;
 
     (result, output_line_mapping)
 }

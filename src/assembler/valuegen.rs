@@ -8,8 +8,6 @@ use crate::util::line_mapping::LineMap;
 pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenResult, LineMap){
     let mut result = ValueGenResult{ constants: vec![], sections: vec![], code: vec![], line_mapping: vec![] };
     let mut output_line_map = LineMap::new();
-    output_line_map.errors_count = input_line_map.errors_count;
-    output_line_map.warnings_count = input_line_map.warnings_count;
 
     let mut input_line_map = input_line_map;
 
@@ -234,6 +232,8 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
     }
 
 
+    output_line_map.errors_count = input_line_map.errors_count;
+    output_line_map.warnings_count = input_line_map.warnings_count;
 
     (result, output_line_map)
 }

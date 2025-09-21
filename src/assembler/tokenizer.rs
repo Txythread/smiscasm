@@ -2,10 +2,8 @@ use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 use crate::util::line_mapping::LineMap;
 
 /// Split lines into tokens
-pub fn tokenize(input: Vec<String>, input_line_map: LineMap) -> (Vec<Vec<String>>, LineMap) {
+pub fn tokenize(input: Vec<String>, mut input_line_map: LineMap) -> (Vec<Vec<String>>, LineMap) {
     let mut output_line_map: LineMap = LineMap::new();
-    output_line_map.warnings_count = input_line_map.warnings_count;
-    output_line_map.errors_count = input_line_map.errors_count;
 
     // The remaining spaces always start a new token, but are themselves to be ignored.
     // '.',  '@',  ':',  '0x',  '0b', '0o'  '[',  ']',  '(',  ')',  ',',  '<',  '>',  '+',   '*',  '/',  '&'  &  '%'
@@ -111,7 +109,7 @@ pub fn tokenize(input: Vec<String>, input_line_map: LineMap) -> (Vec<Vec<String>
                         code.push(line.clone());
 
                         display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_token.len() + 2) as u32), "Empty String Literal".to_string(), "Empty string literals are not allowed, but an empty string literal was found here.".to_string(), code);
-                        output_line_map.errors_count += 1;
+                        input_line_map.errors_count += 1;
                         output_line_map.stop_after_step = true;
                     }
                     // Add the current token & the ''' or the '"'.
@@ -163,7 +161,7 @@ pub fn tokenize(input: Vec<String>, input_line_map: LineMap) -> (Vec<Vec<String>
 
 
             display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_char_count - current_token_start + 2) as u32), "Unterminated String Literal".to_string(), "String literals always need to be terminated, but this one wasn't closed.\nAdd the missing \".".to_string(), code);
-            output_line_map.errors_count += 1;
+            input_line_map.errors_count += 1;
             output_line_map.stop_after_step = true;
         }
 
@@ -188,6 +186,10 @@ pub fn tokenize(input: Vec<String>, input_line_map: LineMap) -> (Vec<Vec<String>
             current_line_tokens = Vec::new();
         }
     }
+
+
+    output_line_map.warnings_count = input_line_map.warnings_count;
+    output_line_map.errors_count = input_line_map.errors_count;
 
     (all_tokens, output_line_map)
 }

@@ -27,10 +27,13 @@ pub async fn assemble(code: String, instructions: Vec<Instruction>) -> Vec<u8> {
     let mut value_repl_result = replace_values_in_code(value_gen_result.0, value_gen_result.1);
     value_repl_result.1.exit_if_needed();
 
-    let tokenized: YATokenizerResult = tokenize_ya_time(value_repl_result.0, value_repl_result.1);
-    let binary: Vec<u8> = perform_last_step(tokenized, instructions);
+    let mut tokenized = tokenize_ya_time(value_repl_result.0, value_repl_result.1);
+    tokenized.1.exit_if_needed();
 
-    binary
+    let binary = perform_last_step(tokenized.0, instructions, tokenized.1);
+    binary.1.summarize();
+
+    binary.0
 }
 
 

@@ -4,8 +4,6 @@ use crate::util::line_mapping::LineMap;
 /// Removes unnecessary information, splits text into lines and tokens
 pub async fn preprocess(code: String, input_line_map: LineMap) -> (Vec<String>, LineMap) {
     let mut output_line_map = LineMap::new();
-    output_line_map.warnings_count = input_line_map.warnings_count;
-    output_line_map.errors_count = input_line_map.errors_count;
 
 
     // Split into lines at newline characters
@@ -54,6 +52,8 @@ pub async fn preprocess(code: String, input_line_map: LineMap) -> (Vec<String>, 
     lines = lines_with_content;
 
 
+    output_line_map.warnings_count = input_line_map.warnings_count;
+    output_line_map.errors_count = input_line_map.errors_count;
 
     (lines, output_line_map)
 }

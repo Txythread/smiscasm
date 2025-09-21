@@ -61,7 +61,7 @@ pub fn display_code_error(kind: ErrorNotificationKind, line: i32, column: Option
         println!("{}", hint_string);
     }
 
-    println!("{}", formated_message);
+    println!("{}\n", formated_message);
 }
 
 #[derive(Clone)]

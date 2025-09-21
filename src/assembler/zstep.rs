@@ -2,14 +2,16 @@ use colorize::AnsiColor;
 use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::assembler::ya_tokenizer::{InstructionArgs, Line, YATokenizerResult};
 use crate::instruction::instruction::*;
+use crate::util::code_error::ErrorNotificationKind;
 use crate::util::exit::{exit, exit_with_variant, ExitCode};
+use crate::util::line_mapping::LineMap;
 // This name is really bad, ik
 // I just want RustRover to sort all of them in a reasonable order.
 // And it's alphabetically.
 // The Z represents 'last'
 
 /// Turns YATokenizerResult into the final binary
-pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction>) -> Vec<u8> {
+pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction>, mut input_line_map: LineMap) -> (Vec<u8>, LineMap) {
     let mut result: Vec<u8> = Vec::new();
     let mut next_page_start = MEMORY_PAGE_SIZE;
     let mut section_starts_in_lines = input.sections.iter().map(|x| x.clone().1).collect::<Vec<u32>>(); // The lines' (in the input code) indexes that belong to a new section. The first element is always the next section.
@@ -29,7 +31,9 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
                 // Look if the section was too long
                 if result.len() > next_page_start {
                     // Too long, throw error
-                    exit(format!("Section \"{}\"", current_section_name), ExitCode::BadCode);
+                    println!("{}", "Error: Section Too Long".red().bold());
+                    println!("{}", format!("Section \"{}\" is too long.\nNo section should be longer than a memory page ({}B), but this section is {}B long.", current_section_name, MEMORY_PAGE_SIZE, result.len()).red());
+                    input_line_map.errors_count += 1;
                 }
                 // Start a new section
                 // Find the section's name
@@ -46,15 +50,6 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
             }
         }
 
-
-        // Get real line number
-        let real_line_number = input.line_mapping.iter().find(| &&x | x.0 == i);
-
-        if real_line_number.is_none() {
-            exit_with_variant(format!("Internal error with line mapping likely caused by \"valuegen\" or \"valuerepl\"., the line number in it's resulting code is: {}.", i), ExitCode::Internal, 2);
-        }
-
-        let real_line_number = real_line_number.unwrap().1;
 
         // Actually convert & add instructions & data to binary.
         match line {
@@ -76,10 +71,11 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
                 }
 
                 // Find a matching instruction
-                let instruction = instructions.iter().find(| &x | x.clone().name == name && x.clone().format == format);
+                let mut correctly_named_instructions = instructions.iter().filter(|&x | x.clone().name == name).collect::<Vec<&Instruction>>();
+                let instruction = correctly_named_instructions.iter().find(|&x| x.clone().format == format);
 
                 if instruction.is_none(){
-                    let mut error = format!("Instruction '{}' from line {} with format (", name, real_line_number);
+                    let mut error = format!("Instruction named '{}' with format (", name);
                     let mut error_format_string = String::new();
                     for format in format.iter() {
                         // If there is something in the format string already, print a colon
@@ -95,9 +91,32 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
 
                     error += error_format_string.as_str();
                     error += ") doesn't exist.";
-                    error = error.red().to_string();
 
-                    exit(error, ExitCode::BadCode);
+                    if !correctly_named_instructions.is_empty() {
+                        error += "\nBut there are instructions with the same name available in other formats: ";
+                        for x in correctly_named_instructions.clone(){
+                            error += "(";
+                            let mut error_format_string = String::new();
+                            for format in x.format.iter() {
+                                // If there is something in the format string already, print a colon
+                                if error_format_string != String::new(){
+                                    error_format_string.push_str(", ");
+                                }
+                                if *format {
+                                    error_format_string += "Imm. Value";
+                                } else {
+                                    error_format_string += "Register";
+                                }
+                            }
+                            error_format_string += ")  ";
+                            error += error_format_string.as_str();
+                        }
+                        error += ".";
+                    }
+
+
+                    input_line_map.print_notification(ErrorNotificationKind::Error, i as u32, Some(0), "No Such Instruction".to_string(), error.to_string());
+                    continue;
                 }
 
                 let instruction = instruction.unwrap().clone();
@@ -155,7 +174,13 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
         }
     }
 
-    result
+    // No output line map needed here as the output is binary,
+    // except for error-throwing purposes.
+    let mut output_line_map = LineMap::new();
+    output_line_map.warnings_count = input_line_map.warnings_count;
+    output_line_map.errors_count = input_line_map.errors_count;
+
+    (result, output_line_map)
 }
 
 fn append_u8_to_vec(x: &mut Vec<u8>, size: &mut u32, data: u8){
