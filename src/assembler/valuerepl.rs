@@ -54,7 +54,7 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
                     // Though the tokens technically remain the same in the original line,
                     // the string should appear as a single token for highlighting.
                     // This is the same as taking the pos of the string.
-                    let mut text_info = input_line_info.token_info[2];
+                    let text_info = input_line_info.token_info[2];
                     input_line_info.token_info = vec![text_info];
 
                     output_line_mapping.add_line(input_line_info);

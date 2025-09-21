@@ -30,6 +30,9 @@ pub fn tokenize_ya_time(from: ValueReplResult, mut input_line_map: LineMap) -> Y
         let kind = line.1.clone();
         let code = line.0;
 
+        // Modify this later to contain new token mapping if needed
+        let line_info = input_line_map.lines[line_number].clone();
+
         match kind {
             LineKind::ASCII => {
                 result.code.push(Line::ASCII(code[0].clone()));
@@ -114,8 +117,8 @@ pub fn tokenize_ya_time(from: ValueReplResult, mut input_line_map: LineMap) -> Y
                     args.push(Global(token.clone()));
                 }
 
-                let line = input_line_map.lines[line_number].clone();
-                output_line_map.add_line(line);
+
+                output_line_map.add_line(line_info);
                 result.code.push(Line::Instruction(name, args.clone()));
             }
         }

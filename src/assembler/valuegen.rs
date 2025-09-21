@@ -79,9 +79,10 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
                     // Add the correct line mapping and remove the " " as separate tokens
                     let mut line = input_line_map.lines[line_number].clone();
                     let start = line.token_info[2].0;
-                    let end = line.token_info[4].0;
+                    let end = line.token_info[4].0 + line.token_info[4].1;
+                    let difference = end - start;
                     line.token_info.remove(2); line.token_info.remove(2); line.token_info.remove(2); // Remove the tokens after .ascii
-                    line.token_info.push((start, end));
+                    line.token_info.push((start, difference));
                     output_line_map.add_line(line);
 
                     let line_number_in_result = result.code.len() - 1;
