@@ -13,7 +13,6 @@ pub fn tokenize_ya_time(from: ValueReplResult, mut input_line_map: LineMap) -> (
         code: vec![],
         global_constants: vec![],
         sections: from.sections.clone(),
-        line_mapping: from.line_mapping.clone(),
     };
     let mut output_line_map = LineMap::new();
 
@@ -134,7 +133,6 @@ pub struct YATokenizerResult {
     pub code: Vec<Line>,
     pub global_constants: Vec<Replacement>,
     pub sections: Vec<(String, u32)>,
-    pub line_mapping: Vec<(usize, usize)>,
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -1,9 +1,9 @@
 use crate::assembler::include::perform_inclusions;
 use crate::assembler::preprocesser::preprocess;
 use crate::assembler::tokenizer::tokenize;
-use crate::assembler::valuegen::{gen_values, ValueGenResult};
-use crate::assembler::valuerepl::{replace_values_in_code, ValueReplResult};
-use crate::assembler::ya_tokenizer::{tokenize_ya_time, YATokenizerResult};
+use crate::assembler::valuegen::gen_values;
+use crate::assembler::valuerepl::replace_values_in_code;
+use crate::assembler::ya_tokenizer::tokenize_ya_time;
 use crate::assembler::zstep::perform_last_step;
 use crate::instruction::instruction::Instruction;
 

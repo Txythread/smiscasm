@@ -1,6 +1,5 @@
 use crate::assembler::valuegen::ValueGenResult;
 use crate::util::code_error::ErrorNotificationKind;
-use crate::util::exit::{exit, exit_with_variant, ExitCode};
 use crate::util::line_mapping::LineMap;
 use crate::util::replacement::Replacement;
 

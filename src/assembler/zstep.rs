@@ -3,7 +3,6 @@ use crate::assembler::assembler::MEMORY_PAGE_SIZE;
 use crate::assembler::ya_tokenizer::{InstructionArgs, Line, YATokenizerResult};
 use crate::instruction::instruction::*;
 use crate::util::code_error::ErrorNotificationKind;
-use crate::util::exit::{exit, exit_with_variant, ExitCode};
 use crate::util::line_mapping::LineMap;
 // This name is really bad, ik
 // I just want RustRover to sort all of them in a reasonable order.
@@ -71,8 +70,8 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
                 }
 
                 // Find a matching instruction
-                let mut correctly_named_instructions = instructions.iter().filter(|&x | x.clone().name == name).collect::<Vec<&Instruction>>();
-                let instruction = correctly_named_instructions.iter().find(|&x| x.clone().format == format);
+                let correctly_named_instructions = instructions.iter().filter(|&x | x.name == name).collect::<Vec<&Instruction>>();
+                let instruction = correctly_named_instructions.iter().find(|&x| x.format == format);
 
                 if instruction.is_none(){
                     let mut error = format!("Instruction named '{}' with format (", name);
@@ -119,7 +118,7 @@ pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction
                     continue;
                 }
 
-                let instruction = instruction.unwrap().clone();
+                let instruction = instruction.unwrap();
 
                 let op_code: u16 = instruction.op_code.into();
                 let mut reg0 = 0u8;
