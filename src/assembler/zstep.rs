@@ -1,6 +1,6 @@
 use colorize::AnsiColor;
 use crate::assembler::assembler::MEMORY_PAGE_SIZE;
-use crate::assembler::ya_tokenizer::{InstructionArgs, Line, YATokenizerResult};
+use crate::assembler::tokenizer::{InstructionArgs, Line, TokenizerResult};
 use crate::instruction::instruction::*;
 use crate::util::code_error::ErrorNotificationKind;
 use crate::util::line_mapping::LineMap;
@@ -10,7 +10,7 @@ use crate::util::line_mapping::LineMap;
 // The Z represents 'last'
 
 /// Turns YATokenizerResult into the final binary
-pub fn perform_last_step(input: YATokenizerResult, instructions: Vec<Instruction>, mut input_line_map: LineMap) -> (Vec<u8>, LineMap) {
+pub fn perform_last_step(input: TokenizerResult, instructions: Vec<Instruction>, mut input_line_map: LineMap) -> (Vec<u8>, LineMap) {
     let mut result: Vec<u8> = Vec::new();
     let mut next_page_start = MEMORY_PAGE_SIZE;
     let mut section_starts_in_lines = input.sections.iter().map(|x| x.clone().1).collect::<Vec<u32>>(); // The lines' (in the input code) indexes that belong to a new section. The first element is always the next section.

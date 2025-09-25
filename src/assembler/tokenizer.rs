@@ -1,274 +1,224 @@
-use crate::util::code_error::{display_code_error, ErrorNotificationKind};
+use std::process::Command;
+use crate::assembler::assembler::MEMORY_PAGE_SIZE;
+use crate::util::replacement::Replacement;
+use crate::assembler::valuerepl::{LineKind, ValueReplResult};
+use crate::assembler::tokenizer::InstructionArgs::{Global, Immediate, Register};
+use crate::util::code_error::ErrorNotificationKind;
 use crate::util::line_mapping::LineMap;
 
-/// Split lines into tokens
-pub fn tokenize(input: Vec<String>, mut input_line_map: LineMap) -> (Vec<Vec<String>>, LineMap) {
-    let mut output_line_map: LineMap = LineMap::new();
+// Yet another tokenizer
+/// Tokenizes ValueReplResult into YATokenizerResult
+pub fn tokenize(from: ValueReplResult, mut input_line_map: LineMap) -> (TokenizerResult, LineMap) {
+    let mut result = TokenizerResult {
+        code: vec![],
+        global_constants: vec![],
+        sections: from.sections.clone(),
+    };
+    let mut output_line_map = LineMap::new();
 
-    // The remaining spaces always start a new token, but are themselves to be ignored.
-    // '.',  '@',  ':',  '0x',  '0b', '0o'  '[',  ']',  '(',  ')',  ',',  '<',  '>',  '+',   '*',  '/',  '&'  &  '%'
-    // also separate strings into tokens (except when in string/char literals), but also serve as tokens themselves.
+    // Copy all global constants
+    result.global_constants = from.global_constants.clone().iter().filter(|&x| x.get_is_global() || x.get_is_function()).map(|x| x.clone()).collect();
 
-    let mut all_tokens: Vec<Vec<String>> = vec![];
-    let mut current_line_tokens: Vec<String> = vec![];
-    let mut current_line_token_map: Vec<(u32, u32)> = vec![];
+    // Go through all the lines
+    'line_loop: for i in from.code.iter().enumerate() {
+        let line_number = i.0;
 
-    // Having more than two characters is not allowed
-    let token_markers = [".".to_string(), "@".to_string(), ":".to_string(), "0x".to_string(), "0b".to_string(), "0o".to_string(), "[".to_string(), "]".to_string(), "(".to_string(), ")".to_string(), "<".to_string(), ">".to_string(), ",".to_string(), "+".to_string(), "*".to_string(), "/".to_string(), "%".to_string(), "&".to_string()];
+        let line = i.1.clone();
+        let kind = line.1.clone();
+        let code = line.0;
 
+        // Modify this later to contain new token mapping if needed
+        let line_info = input_line_map.lines[line_number].clone();
 
-    for line in input.iter().enumerate() {
-        let line_number = line.0;
-        let line = line.1.clone();
-
-        let mut last_character: char = 'x';
-        let mut current_token: String = String::new();
-        let mut in_string_literal = false;
-        let mut current_token_start = 0;
-
-        let mut current_char_count = -1i32;
-        for i in line.chars().enumerate() {
-            let char = i.1.clone();
-            current_char_count += 1;
-
-            if !in_string_literal {
-                // Check for whitespaces, especially \t and ' '
-                if char == ' ' || char == '\t' {
-                    if current_token.is_empty() {
-                        //current_line_tokens.push(current_token.clone());
-                        current_token = String::new();
-                        current_token_start = current_char_count + 1;
-                    } else {
-                        current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
-                        current_token_start = current_char_count + 1;
-
-                        current_line_tokens.push(current_token.clone());
-                        current_token = String::new();
-                    }
-                    last_character = char;
-                    continue;
-                }
-
-                // Check for single-character token markers
-                if token_markers.contains(&char.to_string()) {
-                    if !current_token.is_empty() {
-                        // Replace internal constants
-                        match current_token.as_str(){
-                            "sp" => { current_token = "x31".to_string() },
-                            _ => { /* Nothing to change */}
-                        }
-                        current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
-                        current_token_start = current_char_count;
-
-                        current_line_tokens.push(current_token.clone());
-                        current_token = String::new();
-                    }
-                    current_line_token_map.push((current_token_start as u32, 1u32));
-                    current_token_start = current_char_count + 1;
-
-                    current_line_tokens.push(char.to_string());
-                    last_character = char;
-                    continue;
-                }
-
-                // Check for double-character token markers
-                if token_markers.contains(&(last_character.to_string() + char.to_string().as_str())) {
-                    if !current_token.is_empty() {
-                        // Remove the duplicate char
-                        current_token.remove(current_token.len() - 1);
-                        if !current_token.is_empty() {
-                            current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
-                            current_token_start = current_char_count;
-
-                            current_line_tokens.push(current_token.clone());
-                            current_token = String::new();
-                        }
-                    }
-                    current_line_token_map.push((current_token_start as u32, 2u32));
-                    current_token_start = current_char_count + 1;
-
-                    current_line_tokens.push(last_character.to_string() + char.to_string().as_str());
-                    last_character = char;
-                    continue;
-                }
-            }
-
-            // Check if a string literal starts/ends
-            if (char == '\"' || char == '\'') && last_character != '\\' {
-                if in_string_literal {
-                    // Check the literal is valid
-                    if current_token.is_empty() {
-                        let mut code = vec![];
-
-                        let real_line_number = input_line_map.lines[line_number].line_number;
-
-                        for _ in 0..real_line_number {
-                            code.push("".to_string());
-                        }
-
-                        code.push(line.clone());
-
-                        display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_token.len() + 2) as u32), "Empty String Literal".to_string(), "Empty string literals are not allowed, but an empty string literal was found here.".to_string(), code);
-                        input_line_map.errors_count += 1;
-                        output_line_map.stop_after_step = true;
-                    }
-                    // Add the current token & the ''' or the '"'.
-                    current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
-                    current_token_start = current_char_count;
-
-                    current_line_tokens.push(current_token.clone());
-                    current_token = String::new();
-
-
-                    current_line_token_map.push((current_token_start as u32, 1u32));
-                    current_token_start = current_char_count;
-
-                    current_line_tokens.push(char.to_string());
-                } else {
-                    if !current_token.is_empty() {
-                        current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
-                        current_token_start = current_char_count;
-
-                        current_line_tokens.push(current_token.clone());
-                        current_token = String::new();
-                    }
-                    current_line_token_map.push((current_token_start as u32, 1u32));
-                    current_token_start = current_char_count + 1;
-
-                    current_line_tokens.push(char.to_string());
-                }
-
-                in_string_literal = !in_string_literal;
-                last_character = char;
+        match kind {
+            LineKind::ASCII => {
+                result.code.push(Line::ASCII(code[0].clone()));
                 continue;
             }
 
-            // Since it is neither a whitespace nor a special character, just add it to the current token.
-            current_token.push(char);
-            last_character = char;
-        }
+            LineKind::STC => {
+                let text = code[0].clone();
 
-        if in_string_literal {
-            let real_line_number = input_line_map.lines[line_number].line_number;
+                // Convert using smisc-connect as it has the required functionality
+                // Then make a string from the output.
+                let mut stc_values_string = Command::new("smisc-connect".to_string())
+                    .arg("--convert-to-stc".to_string())
+                    .arg(text.clone())
+                    .output()
+                    .expect("Failed to execute smisc-connect. Is smisc-connect installed?")
+                    .stdout;
 
-            let mut code: Vec<String> = vec![];
+                stc_values_string.remove(stc_values_string.len() - 1);
 
-            for _ in 0..real_line_number {
-                code.push("".to_string());
+
+                let stc_values_string =
+                    stc_values_string
+                    .iter().map(|x|x.clone() as char)
+                    .map(|x|x.to_string())
+                    .collect::<Vec<String>>()
+                    .join("");
+
+
+                // The output from smisc-connect should contain one value per line.
+                // Separate each line to an element in a vector.
+                let stc_values_array = stc_values_string.split(':').collect::<Vec<&str>>();
+
+                let stc_values = stc_values_array.iter().map(|&x| x.parse().unwrap()).collect();
+
+                result.code.push(Line::STC(stc_values));
             }
 
-            code.push(line.clone());
+            LineKind::Code(_) => {
+                let name = code[0].clone();
+
+                let mut args: Vec<InstructionArgs> = vec![];
+                let mut current_token_index = 1u32;
+                for token in code[1..].iter() {
+                    current_token_index += 1;
+                    // If it can be passed immediately, it's just an immediate value.
+                    if let Some(value) = token.parse::<i32>().ok() {
+                        if value.abs() > MEMORY_PAGE_SIZE as i32 {
+                            input_line_map.print_notification(ErrorNotificationKind::Error, line_number as u32, Some(current_token_index), "Value Outside Of Immediate Range".to_string(), format!("Value of {} decimal is not in the range of an immediate value ({} decimal to {} decimal).", value, -(MEMORY_PAGE_SIZE as isize), MEMORY_PAGE_SIZE - 1));
+                        }
+                        // Correct the format
+                        // Choose last 12 bits
+                        let mut immediate_value: u16 = (value & 0x00_00_0F_FF) as u16;
+
+                        if value.is_negative() {
+                            immediate_value = immediate_value | 0x00_00_10_00;
+                        }
+
+                        args.push(Immediate(immediate_value));
+                        continue;
+                    }
+
+                    // If the first char is an 'x' & it can be decoded, it's a register.
+                    let first_char = token.clone().chars().nth(0).unwrap();
+                    let mut token_except_first_char = token.to_string().clone();
+                    token_except_first_char.remove(0);
+
+                    if first_char == 'x'{
+                        if let Some(value) = token_except_first_char.parse::<i32>().ok(){
+                            if value > 31 || value < 0 {
+                                input_line_map.print_notification(ErrorNotificationKind::Error, line_number as u32, Some(current_token_index - 1), "Unknown Register".to_string(), format!("No such register: \"{}\". Known registers include x0...x31 and sp (which links to x31).", token));
+                                continue 'line_loop;
+                            }
 
 
-            display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_char_count - current_token_start + 2) as u32), "Unterminated String Literal".to_string(), "String literals always need to be terminated, but this one wasn't closed.\nAdd the missing \".".to_string(), code);
-            input_line_map.errors_count += 1;
-            output_line_map.stop_after_step = true;
-        }
+                            args.push(Register(value as u8));
+                            continue;
+                        }
+                    }
 
-        if !current_token.is_empty() {
-            current_line_token_map.push((current_token_start as u32, current_token.len() as u32));
-            current_token_start = current_char_count + 1;
+                    // If neither of the above way works, it's a global constant.
+                    args.push(Global(token.clone()));
+                }
 
-            current_line_tokens.push(current_token.clone());
-        }
 
-        if !current_line_tokens.is_empty() {
-            // Handle line in input map
-            let mut line_in_input_map = input_line_map.lines[line_number].clone();
-
-            // Add the token mapping
-            line_in_input_map.token_info = current_line_token_map.clone();
-            current_line_token_map = vec![];
-
-            output_line_map.add_line(line_in_input_map);
-
-            all_tokens.push(current_line_tokens.clone());
-            current_line_tokens = Vec::new();
+                output_line_map.add_line(line_info);
+                result.code.push(Line::Instruction(name, args.clone()));
+            }
         }
     }
 
 
-    output_line_map.warnings_count = input_line_map.warnings_count;
     output_line_map.errors_count = input_line_map.errors_count;
+    output_line_map.warnings_count = input_line_map.warnings_count;
 
-    (all_tokens, output_line_map)
+
+    (result, output_line_map)
 }
+
+pub struct TokenizerResult {
+    pub code: Vec<Line>,
+    pub global_constants: Vec<Replacement>,
+    pub sections: Vec<(String, u32)>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Line{
+    Instruction(String, Vec<InstructionArgs>),      // Name and args
+    ASCII(String),                                  // ASCII Text
+    STC(Vec<u8>),                                   // STC Text values
+}
+
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum InstructionArgs{
+    Register(u8),                                   // Only least significant 6 bits
+    Immediate(u16),                                 // Least significant 11 are value, the 12th one from the right is the sign, the 13th one is "shift by eleven bits"
+    Global(String),                                 // The name of the global constant
+}
+
 
 #[cfg(test)]
 mod tests {
-    use crate::assembler::tokenizer::tokenize;
+    use crate::assembler::valuerepl::{LineKind, ValueReplResult};
+    use crate::assembler::tokenizer::{tokenize, InstructionArgs, Line};
     use crate::util::line_mapping::{LineInfo, LineMap};
+    use crate::util::replacement::Replacement;
 
     #[test]
-    fn test_tokenize() {
-        let input = vec![
-            ".section \"CODE\"",
-            "main:",
-            "adrp x0, msg@PAGE",
-            "add x0, msg@PAGEOFF",
-            "adrp x1, msg_end@PAGE",
-            "add x1, msg_end@PAGEOFF",
-            "sub x1, 0x1",
-            "loop:",
-            "lb x2, x0",
-            "add x0, 1",
-            "out x2",
-            "mov x0, x3",
-            "sub x3, x1",
-            "jmpz x3, end",
-            "jmp loop",
-            "end:",
-            "hlt",
-            ".section \"DATA\"",
-            "msg:",
-            ".ascii \"Hello, world!\"",
-            ".msg_end [$ - 1]",
+    fn test_tokenize(){
+        let mut input_constants = vec![
+            Replacement::new("xyz".to_string(), "10".to_string(), false),
+            Replacement::new("zyx".to_string(), "16".to_string(), false),
+            Replacement::new("abc".to_string(), "20".to_string(), false),
+            Replacement::new("main".to_string(), "CODE:0".to_string(), true),
+            Replacement::new("msg".to_string(), "DATA:0".to_string(), true),
         ];
 
-        let mut input2: Vec<String> = vec![];
+        input_constants[0].set_is_global(true);
+        input_constants[3].set_is_global(true);
 
-        for i in input{
-            input2.push(i.to_string());
-        }
-
-        let input = input2;
-
-        let expected = vec![
-            vec![".", "section",  "\"", "CODE", "\""],
-            vec!["main", ":"],
-            vec!["adrp", "x0", ",", "msg", "@", "PAGE"],
-            vec!["add", "x0", ",", "msg", "@", "PAGEOFF"],
-            vec!["adrp", "x1", ",", "msg_end", "@", "PAGE"],
-            vec!["add", "x1", ",", "msg_end", "@", "PAGEOFF"],
-            vec!["sub",  "x1", ",", "0x", "1"],
-            vec!["loop", ":"],
-            vec!["lb",  "x2", ",", "x0"],
-            vec!["add", "x0", ",", "1"],
-            vec!["out", "x2"],
-            vec!["mov", "x0", ",", "x3"],
-            vec!["sub", "x3", ",", "x1"],
-            vec!["jmpz", "x3", ",", "end"],
-            vec!["jmp", "loop"],
-            vec!["end", ":"],
-            vec!["hlt"],
-            vec![".", "section", "\"", "DATA", "\""],
-            vec!["msg", ":"],
-            vec![".", "ascii", "\"", "Hello, world!", "\""],
-            vec![".", "msg_end", "[", "$", "-", "1", "]"]
+        let input_sections : Vec<(String, u32)>= vec![
+            ("CODE".to_string(), 0),
+            ("DATA".to_string(), 1),
         ];
 
+
+        let input_code: Vec<(Vec<String>, LineKind)> = vec![
+            (vec!["adrp".to_string(), "x0".to_string(), "2048".to_string()], LineKind::Code(false)),
+            (vec!["add".to_string(), "x0".to_string(), "0".to_string()], LineKind::Code(false)),
+            (vec!["Hi".to_string()], LineKind::ASCII)
+        ];
+
+
+
+        let line_mapping_input = vec![(0, 1), (1, 1), (2, 2)];
+
+        let input = ValueReplResult {
+            global_constants: input_constants,
+            sections: input_sections,
+            code: input_code,
+            line_mapping: line_mapping_input,
+        };
+
+        let expected_output_code: Vec<Line> = vec![
+            Line::Instruction("adrp".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(2048)]),
+            Line::Instruction("add".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(0)]),
+            Line::ASCII("Hi".to_string()),
+        ];
 
         let mut line_map = LineMap::new();
 
-        for i in 0..100{
-            line_map.add_line(LineInfo::new_no_info("".to_string(), i));
+        for i in 0..101{
+            line_map.add_line(LineInfo::new("as as as s".to_string(), 0, vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ], i))
         }
-        let result = tokenize(input, line_map).0;
 
-        for i in 0..result.len(){
-            for j in 0..expected[i].len(){
-                assert_eq!(expected[i][j], result[i][j]);
-            }
+        let result = tokenize(input, line_map);
+        let output_code = result.0.code.clone();
+
+        assert_eq!(output_code.len(), expected_output_code.len());
+
+        for i in 0..expected_output_code.len() {
+            let expected = expected_output_code[i].clone();
+            let output = output_code[i].clone();
+
+            assert_eq!(output, expected);
         }
+
+
+
     }
 }

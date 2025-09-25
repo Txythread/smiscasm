@@ -1,9 +1,9 @@
 use crate::assembler::include::perform_inclusions;
 use crate::assembler::preprocesser::preprocess;
+use crate::assembler::splitter::split;
 use crate::assembler::tokenizer::tokenize;
 use crate::assembler::valuegen::gen_values;
 use crate::assembler::valuerepl::replace_values_in_code;
-use crate::assembler::ya_tokenizer::tokenize_ya_time;
 use crate::assembler::zstep::perform_last_step;
 use crate::instruction::instruction::Instruction;
 
@@ -18,16 +18,16 @@ pub async fn assemble(code: String, instructions: Vec<Instruction>) -> Vec<u8> {
     let mut preprocessed = preprocess(inclusive.0, inclusive.1).await;
     preprocessed.1.exit_if_needed();
 
-    let mut tokenized = tokenize(preprocessed.0, preprocessed.1);
-    tokenized.1.exit_if_needed();
+    let mut splitted = split(preprocessed.0, preprocessed.1);
+    splitted.1.exit_if_needed();
 
-    let mut value_gen_result = gen_values(tokenized.0, tokenized.1);
+    let mut value_gen_result = gen_values(splitted.0, splitted.1);
     value_gen_result.1.exit_if_needed();
 
     let mut value_repl_result = replace_values_in_code(value_gen_result.0, value_gen_result.1);
     value_repl_result.1.exit_if_needed();
 
-    let mut tokenized = tokenize_ya_time(value_repl_result.0, value_repl_result.1);
+    let mut tokenized = tokenize(value_repl_result.0, value_repl_result.1);
     tokenized.1.exit_if_needed();
 
     let binary = perform_last_step(tokenized.0, instructions, tokenized.1);

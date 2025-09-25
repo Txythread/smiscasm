@@ -134,6 +134,11 @@ pub struct LineInfo {
 }
 
 impl LineInfo{
+    #[cfg(test)]
+    pub fn new(contents: String, indent: u32, token_info: Vec<(u32, u32)>, line_number: u32) -> LineInfo{
+        LineInfo{contents, indent, token_info, line_number}
+    }
+
     /// Generate a new LineInfo with text only, without any info about tokens.
     pub fn new_no_info(line: String, line_number: u32) -> Self{
         let mut line_whitespace_length = 0u32;
