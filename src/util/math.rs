@@ -2,6 +2,45 @@ use colorize::*;
 use crate::util::operation::Operation;
 use crate::util::replacement::Replacement;
 
+pub fn resolve_argument(argument: String, replacements: Vec<Replacement>, sections: Vec<(String, u32)>) -> String {
+    let replacements = create_string_resolving_replacements(replacements, sections);
+
+    resolve_string(argument, replacements)
+}
+
+/// Creates things like page offsets (PAGEOFF), pages (@PAGE) etc.
+fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections: Vec<(String, u32)>) -> Vec<Replacement> {
+    let mut output_replacements: Vec<Replacement> = Vec::new();
+
+    for replacement in replacements {
+        // Look if it's an address.
+        // If yes, generate @PAGE and @PAGEOFF
+
+        let page_name = replacement.get_value().split(':').map(|x|x.to_string().clone()).nth(0);
+        let page_offset = replacement.get_value().split(':').map(|x|x.to_string().clone()).nth(1);
+
+        // If both of the above values exist, then it's an address.
+        if page_name.is_some() && page_offset.is_some() {
+            let page_name = page_name.unwrap();
+            let page_offset = page_offset.unwrap();
+
+            if let Some(page_offset) = page_offset.parse::<i32>().ok() {
+                // The how-many-th section fits the name?
+                if let Some(page_start) = sections.clone().iter().enumerate().find(| &x | x.1.clone().0 == page_name).map(| x | x.0){
+                    output_replacements.push(Replacement::new(format!("{}@PAGE", replacement.get_name()), page_start.to_string(), replacement.get_is_function()));
+                    output_replacements.push(Replacement::new(format!("{}@PAGEOFF", replacement.get_name()), page_offset.to_string(), replacement.get_is_function()));
+                }
+            }
+        }
+
+        // Add the normal replacements to the map, too
+        output_replacements.push(replacement);
+    }
+
+
+    output_replacements
+}
+
 /// Turns a string like "1 + 2" to "3"
 pub(crate) fn resolve_string(string: String, replacements: Vec<Replacement>) -> String {
     // Tokenize
@@ -18,8 +57,9 @@ pub(crate) fn resolve_string(string: String, replacements: Vec<Replacement>) -> 
         }
         // Apply all replacements
         for replacement in replacements.clone() {
-            let replacement = token.replace(&replacement.get_name(), &replacement.get_value());
-            token = replacement;
+            if token == replacement.get_name(){
+                token = replacement.get_value().to_string();
+            }
         }
 
         if operand_1.is_none() {
@@ -51,6 +91,12 @@ pub(crate) fn resolve_string(string: String, replacements: Vec<Replacement>) -> 
         let error = format!("No operand specified to resolve ({})", string).red();
         panic!("{}", error);
     }else{
+        // Check if the string only contains one operand.
+        if operand_2.is_none() && operand_1.is_some() {
+            return operand_1.unwrap().to_string();
+        }
+
+
         let error = format!("No operation specified to resolve ({})", string).red();
         panic!("{}", error);
     }
@@ -58,12 +104,45 @@ pub(crate) fn resolve_string(string: String, replacements: Vec<Replacement>) -> 
 
 #[cfg(test)]
 mod tests {
-    use crate::util::math::resolve_string;
+    use crate::util::math::{create_string_resolving_replacements, resolve_argument, resolve_string};
+    use crate::util::replacement::Replacement;
 
     #[test]
     fn test_resolve_string() {
         assert_eq!(resolve_string(String::from("3 * 8"), vec![]), "24");
         assert_eq!(resolve_string(String::from("15 + 3"), vec![]), "18");
+
+        let replacements = vec![Replacement::new("x".to_string(), "5".to_string(), false)];
+        assert_eq!(resolve_string(String::from("10 - x"), replacements.clone()), "5");
+
+        assert_eq!(resolve_string("x".to_string(), replacements), "5");
+
         assert_eq!(resolve_string(String::from("\"Hello world\""), vec![]), "");
+    }
+
+    #[test]
+    fn test_resolve_string_resolving_replacements() {
+        let replacements = vec![Replacement::new("msg".to_string(), "DATA:5".to_string(), false)];
+        let sections = vec![("CODE".to_string(), 1), ("DATA".to_string(), 10)];
+
+        let new_replacements = create_string_resolving_replacements(replacements, sections);
+
+
+        assert_eq!(new_replacements[0], Replacement::new("msg@PAGE".to_string(), "1".to_string(), false));
+        assert_eq!(new_replacements[1], Replacement::new("msg@PAGEOFF".to_string(), "5".to_string(), false));
+        assert_eq!(new_replacements[2], Replacement::new("msg".to_string(), "DATA:5".to_string(), false));
+    }
+
+    #[test]
+    fn test_resolve_argument() {
+        let replacements = vec![
+            Replacement::new("msg".to_string(), "DATA:5".to_string(), false),
+            Replacement::new("msg-len".to_string(), "13".to_string(), false),
+        ];
+        let sections = vec![("CODE".to_string(), 1), ("DATA".to_string(), 10)];
+
+        let argument_result = resolve_argument("msg@PAGEOFF + msg-len".to_string(), replacements, sections);
+
+        assert_eq!(argument_result, "18");
     }
 }

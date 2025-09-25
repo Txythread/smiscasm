@@ -176,7 +176,7 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
                         }
 
                         let section_idx = section_idx.unwrap().clone();
-                        let memory_page_start = section_idx/* * MEMORY_PAGE_SIZE*/;
+                        let memory_page_start = section_idx;
 
                         final_args.push(memory_page_start.to_string());
 
@@ -212,6 +212,8 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
 
             // If not, just replace values normally
             if arg.len() != 1{
+
+                println!("Received faulty argument: {:?}", arg);
                 input_line_mapping.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, arg_start_pos_in_tokens, arg_start_pos_in_tokens + arg.len() as u32, "Faulty Argument Format".to_string(), "Couldn't infer the meaning of this argument.".to_string());
                 arg_start_pos_in_tokens += arg.len() as u32 + 1; // Add the amount of tokens plus one for the comma
                 input_line_mapping.stop_after_step = true;
@@ -283,14 +285,10 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
         result.code.push((final_args, LineKind::Code(false)));
     }
 
-    // TODO: Delete this fucking loop after the update of ya_tokenizer
-    for _ in 0..100{
-        result.line_mapping.push((0, 0));
-    }
-
 
     output_line_mapping.warnings_count = input_line_mapping.warnings_count;
     output_line_mapping.errors_count = input_line_mapping.errors_count;
+    output_line_mapping.stop_after_step = input_line_mapping.stop_after_step;
 
     (result, output_line_mapping)
 }
