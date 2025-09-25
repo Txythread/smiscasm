@@ -1,2 +1,3 @@
 TODO:
 * Add section re-ordering to linker
+* Implement warning in value repl in case an argument can't be resolved (hint: add x0, non-existing-value)

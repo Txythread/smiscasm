@@ -44,13 +44,18 @@ fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections
 /// Turns a string like "1 + 2" to "3"
 pub(crate) fn resolve_string(string: String, replacements: Vec<Replacement>) -> String {
     // Tokenize
-    let tokens: Vec<&str> = string.split(' ').collect();
+    let mut tokens: Vec<&str> = split_with_delimiters(&*string, &[' ', '+', '*', '/', '-']);
+    // Remove empty tokens
+    tokens = tokens.iter().filter(|&x| !(*x).is_empty() && *x != " ").map(|&x| x).collect();
+
     let mut operand_1: Option<i64> = None;
     let mut operand_2: Option<i64> = None;
     let mut operation: Option<Operation> = None;
 
+    println!("Tokens {:?}", tokens);
+
     for token in tokens {
-        let mut token = token.to_string();
+        let mut token = token.to_string().trim().to_string();
         if let Some(op) = Operation::from_string(&token) {
             operation = Some(op);
             continue;
@@ -102,6 +107,30 @@ pub(crate) fn resolve_string(string: String, replacements: Vec<Replacement>) -> 
     }
 }
 
+fn split_with_delimiters<'a>(s: &'a str, delims: &[char]) -> Vec<&'a str> {
+    let mut out = Vec::new();
+    let mut start = 0;
+
+    for (i, c) in s.char_indices() {
+        if delims.contains(&c) {
+            if start != i {
+                let text = &s[start..i];
+                if text != " "{
+                    out.push(text); // push text before delimiter
+                }
+            }
+            out.push(&s[i..i + c.len_utf8()]);
+            start = i + c.len_utf8();
+        }
+    }
+
+    if start < s.len() {
+        out.push(&s[start..]); // push the last part
+    }
+
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use crate::util::math::{create_string_resolving_replacements, resolve_argument, resolve_string};
@@ -137,11 +166,11 @@ mod tests {
     fn test_resolve_argument() {
         let replacements = vec![
             Replacement::new("msg".to_string(), "DATA:5".to_string(), false),
-            Replacement::new("msg-len".to_string(), "13".to_string(), false),
+            Replacement::new("msg_len".to_string(), "13".to_string(), false),
         ];
         let sections = vec![("CODE".to_string(), 1), ("DATA".to_string(), 10)];
 
-        let argument_result = resolve_argument("msg@PAGEOFF + msg-len".to_string(), replacements, sections);
+        let argument_result = resolve_argument("msg@PAGEOFF + msg_len".to_string(), replacements, sections);
 
         assert_eq!(argument_result, "18");
     }
