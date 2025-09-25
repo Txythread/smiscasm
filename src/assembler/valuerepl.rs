@@ -142,14 +142,7 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
             }
 
 
-            // If not, just replace values normally
-            if arg.len() != 1{
-                input_line_mapping.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, arg_start_pos_in_tokens, arg_start_pos_in_tokens + arg.len() as u32, "Faulty Argument Format".to_string(), "Couldn't infer the meaning of this argument.".to_string());
-                arg_start_pos_in_tokens += arg.len() as u32 + 1; // Add the amount of tokens plus one for the comma
-                input_line_mapping.stop_after_step = true;
-                continue;
-            }
-
+            // Attempt decoding as a register
             let arg_0 = arg[0].clone();
             let arg_c1 = arg_0.clone().chars().nth(0).unwrap();
             let arg_except_first_char = arg_0[1..].to_string();
@@ -168,38 +161,6 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
 
                 arg_start_pos_in_tokens += arg.len() as u32 + 1; // Add the amount of tokens plus one for the comma
                 continue;
-            }
-
-            // Find a replacement that matches the name of the constant
-            let replacement = code.constants.iter().find(| &x | x.get_name() == arg_0);
-
-            if replacement.is_none() {
-                // Look if it's in a known list
-                match arg_0.as_str() {
-                    "sp" => break,
-                    _ => {
-                        // The user probably misspelled.
-                        input_line_mapping.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, arg_start_pos_in_tokens, arg_start_pos_in_tokens + arg.len() as u32, "Invalid Argument".to_string(), "This argument is neither an immediate value nor is it a constant.".to_string());
-                        arg_start_pos_in_tokens += arg.len() as u32 + 1; // Add the amount of tokens plus one for the comma
-                        input_line_mapping.stop_after_step = true;
-                        continue;
-                    }
-                }
-            }
-
-            let replacement = replacement.unwrap().clone();
-
-            // Add the new token to the line mapping.
-            let start_pos = input_line_mapping.lines[line_number].token_info[arg_start_pos_in_tokens as usize].0;
-            let end_token = input_line_mapping.lines[line_number].token_info[arg_start_pos_in_tokens as usize + arg.len() - 1];
-            let end_pos = end_token.0 + end_token.1;
-            let in_between_tokens_length = end_pos - start_pos;
-            new_tokens.push((start_pos, in_between_tokens_length));
-
-            if replacement.get_is_global(){
-                final_args.push("@".to_owned() + arg_0.clone().as_str()); // Has to be changed in a later stage
-            } else {
-                final_args.push(replacement.get_value());
             }
         }
 
