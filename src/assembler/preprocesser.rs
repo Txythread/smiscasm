@@ -59,14 +59,20 @@ pub async fn preprocess(code: String, input_line_map: LineMap) -> (Vec<String>, 
 }
 
 
-/*
 #[cfg(test)]
 mod tests {
     use crate::assembler::preprocesser::preprocess;
-    use crate::util::line_mapping::LineMap;
+    use crate::util::line_mapping::{LineInfo, LineMap};
 
-   /* #[tokio::test]
+    #[tokio::test]
     async fn test_preprocesser() {
+        let mut line_map = LineMap::new();
+
+        for i in 0..100{
+            line_map.add_line(LineInfo::new_no_info("".to_string(), i));
+        }
+
+
         let preprocessed_code = preprocess("\n\
         \n\
         .section \"CODE\"\n\
@@ -92,7 +98,7 @@ end:\n\
 msg:\n\
         .ascii \"Hello, world!\" #Very important text\n\
 .msg_end [$ - 1]\n\
-        ".to_string(), LineMap::new());
+        ".to_string(), line_map);
         let expected_result = vec![
                                    ".section \"CODE\"",
                                    "main:",
@@ -117,10 +123,11 @@ msg:\n\
                                    ".msg_end [$ - 1]",
         ];
 
+        let result = preprocessed_code.await.0;
 
 
-        for i in 0..preprocessed_code.await.0.len().clone(){
-            assert_eq!(preprocessed_code.await.0[i].clone(), expected_result[i]);
+        for i in 0..result.len().clone(){
+            assert_eq!(result[i].clone(), expected_result[i]);
         }
-    }*/
-}*/
+    }
+}
