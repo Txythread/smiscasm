@@ -17,6 +17,17 @@ impl LineMap{
         LineMap{lines: Vec::new(), stop_after_step: false, warnings_count: 0, errors_count: 0 }
     }
 
+    #[cfg(test)]
+    pub fn test_map() -> LineMap{
+        let mut lines = Vec::new();
+
+        for i in 0..100{
+            lines.push(LineInfo::new("as as sas asd".to_string(), 0, vec![(0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1)], i));
+        }
+
+        LineMap { lines, stop_after_step: false, warnings_count:0, errors_count:0 }
+    }
+
     /// Add a line in the next position
     pub fn add_line(&mut self, line: LineInfo){
         self.lines.push(line);

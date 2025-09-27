@@ -290,11 +290,7 @@ mod tests{
 
         let expected_line_mapping = vec![(0, 7), (1, 10)];
 
-        let mut line_map = LineMap::new();
-
-        for i in 0..100{
-            line_map.add_line(LineInfo::new("as as as as".to_string(), 0, vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ], i))
-        }
+        let line_map = LineMap::test_map();
 
         let result = gen_values(data, line_map);
 

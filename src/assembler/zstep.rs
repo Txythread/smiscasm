@@ -187,15 +187,6 @@ fn append_u8_to_vec(x: &mut Vec<u8>, size: &mut u32, data: u8){
     *size += 1;
 }
 
-#[allow(dead_code)]
-fn append_u16_to_vec(x: &mut Vec<u8>, size: &mut u32, data: u16) {
-    let msb: u8 = ((data & 0xFF00) >> 8) as u8;
-    let lsb: u8 = ((data & 0x00FF) >> 0) as u8;
-    x.push(msb);
-    x.push(lsb);
-    *size += 2;
-}
-
 fn append_u32_to_vec(x: &mut Vec<u8>, size: &mut u32, data: u32) {
     let msb: u8 = ((data & 0xFF000000) >> 24) as u8;
     let by1: u8 = ((data & 0x00FF0000) >> 16) as u8;

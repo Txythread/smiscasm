@@ -62,15 +62,70 @@ pub async fn preprocess(code: String, input_line_map: LineMap) -> (Vec<String>, 
 #[cfg(test)]
 mod tests {
     use crate::assembler::preprocesser::preprocess;
-    use crate::util::line_mapping::{LineInfo, LineMap};
+    use crate::util::line_mapping::LineMap;
 
     #[tokio::test]
     async fn test_preprocesser() {
-        let mut line_map = LineMap::new();
+        let line_map = LineMap::test_map();
 
-        for i in 0..100{
-            line_map.add_line(LineInfo::new_no_info("".to_string(), i));
+
+        let preprocessed_code = preprocess("\n\
+        \n\
+        .section \"CODE\"\n\
+main:\n\
+        adrp x0, msg@PAGE; add x0, msg@PAGEOFF\n\
+        adrp x1, msg_end@PAGE\n\
+        add x1, msg_end@PAGEOFF\n\
+        sub x1, 1\n\
+        \n\
+loop:\n\
+        lb x2, x0\n\
+        add x0, 1\n\
+        out x2\n\
+        mov x0, x3\n\
+        sub x3, x1\n\
+        jmpz x3, end\n\
+        jmp loop\n\
+\n\
+end:\n\
+        hlt\n\
+ \n\
+.section \"DATA\"\n\
+msg:\n\
+        .ascii \"Hello, world!\" #Very important text\n\
+.msg_end [$ - 1]\n\
+        ".to_string(), line_map);
+        let expected_result = vec![
+            ".section \"CODE\"",
+            "main:",
+            "adrp x0, msg@PAGE",
+            "add x0, msg@PAGEOFF",
+            "adrp x1, msg_end@PAGE",
+            "add x1, msg_end@PAGEOFF",
+            "sub x1, 1",
+            "loop:",
+            "lb x2, x0",
+            "add x0, 1",
+            "out x2",
+            "mov x0, x3",
+            "sub x3, x1",
+            "jmpz x3, end",
+            "jmp loop",
+            "end:",
+            "hlt",
+            ".section \"DATA\"",
+            "msg:",
+            ".ascii \"Hello, world!\"",
+            ".msg_end [$ - 1]",
+        ];
+
+        let result = preprocessed_code.await.0;
+
+
+        for i in 0..result.len().clone(){
+            assert_eq!(result[i].clone(), expected_result[i]);
         }
+        let line_map = LineMap::test_map();
 
 
         let preprocessed_code = preprocess("\n\

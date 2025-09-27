@@ -42,7 +42,7 @@ fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections
 }
 
 /// Turns a string like "1 + 2" to "3"
-pub(crate) fn resolve_string(string: String, replacements: Vec<Replacement>) -> String {
+pub fn resolve_string(string: String, replacements: Vec<Replacement>) -> String {
     // Tokenize
     let mut tokens: Vec<&str> = split_with_delimiters(&*string, &[' ', '+', '*', '/', '-']);
     // Remove empty tokens

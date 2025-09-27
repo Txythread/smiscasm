@@ -197,7 +197,7 @@ pub fn split(input: Vec<String>, mut input_line_map: LineMap) -> (Vec<Vec<String
 #[cfg(test)]
 mod tests {
     use crate::assembler::splitter::split;
-    use crate::util::line_mapping::{LineInfo, LineMap};
+    use crate::util::line_mapping::LineMap;
 
     #[test]
     fn test_splitting() {
@@ -258,11 +258,9 @@ mod tests {
         ];
 
 
-        let mut line_map = LineMap::new();
+        let line_map = LineMap::test_map();
 
-        for i in 0..100{
-            line_map.add_line(LineInfo::new_no_info("".to_string(), i));
-        }
+
         let result = split(input, line_map).0;
 
         for i in 0..result.len(){

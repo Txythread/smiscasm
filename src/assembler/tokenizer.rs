@@ -155,7 +155,7 @@ pub enum InstructionArgs{
 mod tests {
     use crate::assembler::valuerepl::{LineKind, ValueReplResult};
     use crate::assembler::tokenizer::{tokenize, InstructionArgs, Line};
-    use crate::util::line_mapping::{LineInfo, LineMap};
+    use crate::util::line_mapping::LineMap;
     use crate::util::replacement::Replacement;
 
     #[test]
@@ -200,11 +200,7 @@ mod tests {
             Line::ASCII("Hi".to_string()),
         ];
 
-        let mut line_map = LineMap::new();
-
-        for i in 0..101{
-            line_map.add_line(LineInfo::new("as as as s".to_string(), 0, vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ], i))
-        }
+        let line_map = LineMap::test_map();
 
         let result = tokenize(input, line_map);
         let output_code = result.0.code.clone();

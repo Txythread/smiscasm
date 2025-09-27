@@ -200,12 +200,11 @@ pub enum LineKind {
 
 
 
-/*
 #[cfg(test)]
 mod tests {
     use crate::assembler::valuegen::ValueGenResult;
     use crate::assembler::valuerepl::{replace_values_in_code, LineKind};
-    use crate::util::line_mapping::{LineInfo, LineMap};
+    use crate::util::line_mapping::LineMap;
     use crate::util::replacement::Replacement;
 
     #[test]
@@ -249,14 +248,11 @@ mod tests {
             line_mapping: line_mapping_input,
         };
 
-        let mut line_map = LineMap::new();
-
-        for i in 0..5{
-            line_map.add_line(LineInfo::new("as as as as".to_string(), 0, vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ], i))
-        }
+        let line_map = LineMap::test_map();
 
 
         let result = replace_values_in_code(input, line_map);
+        let result = result.0;
 
         assert_eq!(result.code.len(), expected_output_code.len());
 
@@ -269,4 +265,4 @@ mod tests {
 
 
     }
-}*/
+}
