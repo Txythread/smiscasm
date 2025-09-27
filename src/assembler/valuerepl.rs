@@ -1,5 +1,5 @@
 use crate::assembler::valuegen::ValueGenResult;
-use crate::util::code_error::ErrorNotificationKind;
+use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 use crate::util::line_mapping::LineMap;
 use crate::util::math::resolve_argument;
 use crate::util::replacement::Replacement;
@@ -124,18 +124,20 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
         // The start and stop positions of the new tokens (instead of msg@PAGEOFF being three separate tokens, they should be only one in the end).
         let mut new_tokens: Vec<(u32, u32)> = vec![input_line_mapping.lines[line_number].token_info[0]]; // Initialize with position of instruction
         for arg in args {
+            // Add the new token to the line mapping.
+            let start_pos = input_line_mapping.lines[line_number].token_info[arg_start_pos_in_tokens as usize].0;
+            let end_token = input_line_mapping.lines[line_number].token_info[arg_start_pos_in_tokens as usize + arg.len() - 1];
+            let end_pos = end_token.0 + end_token.1;
+            let in_between_tokens_length = end_pos - start_pos;
+            new_tokens.push((start_pos, in_between_tokens_length));
+
+
+
             let argument_string = arg.join("");
 
             let math_solution = resolve_argument(argument_string.clone(), code.constants.clone(), code.sections.clone());
 
             if math_solution != ""{
-                let start_pos = input_line_mapping.lines[line_number].token_info[arg_start_pos_in_tokens as usize].0;
-                let end_token = input_line_mapping.lines[line_number].token_info[arg_start_pos_in_tokens as usize + arg.len() - 1];
-                let end_pos = end_token.0 + end_token.1;
-                let in_between_tokens_length = end_pos - start_pos;
-                new_tokens.push((start_pos, in_between_tokens_length));
-
-
                 final_args.push(math_solution.clone());
 
                 continue;
@@ -152,16 +154,23 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
                 // Just a normal value, nothing to replace
                 final_args.push(arg_0);
 
-                // Add the new token to the line mapping.
-                let start_pos = input_line_mapping.lines[line_number].token_info[arg_start_pos_in_tokens as usize].0;
-                let end_token = input_line_mapping.lines[line_number].token_info[arg_start_pos_in_tokens as usize + arg.len() - 1];
-                let end_pos = end_token.0 + end_token.1;
-                let in_between_tokens_length = end_pos - start_pos;
-                new_tokens.push((start_pos, in_between_tokens_length));
-
                 arg_start_pos_in_tokens += arg.len() as u32 + 1; // Add the amount of tokens plus one for the comma
                 continue;
             }
+
+            // None of the above decoding attempts succeeded, throw an error
+            let mut code: Vec<String> = Vec::with_capacity(line.len());
+            let real_line_number = input_line_mapping.lines[line_number].line_number;
+
+            for _ in 0..real_line_number {
+                code.push(String::new());
+            }
+
+            code.push(input_line_mapping.lines[line_number].contents.clone());
+
+            display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some(start_pos), Some(in_between_tokens_length), "Argument Decoding Error".to_string(), "Can't decode this argument. Check whether all variables exist if applicable.".to_string(), code);
+            input_line_mapping.stop_after_step = true;
+            input_line_mapping.errors_count += 1;
         }
 
         // Add the instruction back to the top of the chain

@@ -52,7 +52,6 @@ pub fn resolve_string(string: String, replacements: Vec<Replacement>) -> String 
     let mut operand_2: Option<i64> = None;
     let mut operation: Option<Operation> = None;
 
-    println!("Tokens {:?}", tokens);
 
     for token in tokens {
         let mut token = token.to_string().trim().to_string();

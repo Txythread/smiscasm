@@ -138,7 +138,7 @@ impl LineMap{
 
 #[derive(Clone, Debug)]
 pub struct LineInfo {
-    contents: String,           // The contents (without leading & trailing whitespaces)
+    pub contents: String,           // The contents (without leading & trailing whitespaces)
     indent: u32,                // The indent (in spaces) this line has (for formatting)
     pub token_info: Vec<(u32, u32)>,// The start of a token and its length
     pub line_number: u32,           // The original line number
