@@ -66,7 +66,11 @@ pub fn resolve_string(string: String, replacements: Vec<Replacement>) -> String 
             }
         }
 
+        // Fix the raw number format if possible (convert to decimal)
+        let token = convert_to_decimal(token);
+
         if operand_1.is_none() {
+
             let op_1 = token.parse::<i64>();
 
             if op_1.is_err() { return "".to_string(); }
@@ -128,6 +132,32 @@ fn split_with_delimiters<'a>(s: &'a str, delims: &[char]) -> Vec<&'a str> {
     }
 
     out
+}
+
+
+/// Turns a string with a number in octal, binary or hexadecimal into decimal if possible, returns the input string otherwise.
+fn convert_to_decimal(input: String) -> String {
+
+    if let Some(hex_value) = input.strip_prefix("0x") {
+        if let Some(value) = u32::from_str_radix(hex_value, 16).ok() {
+            return value.to_string()
+        }
+    }
+
+    if let Some(bin_value) = input.strip_prefix("0b") {
+        if let Some(value) = u32::from_str_radix(bin_value, 2).ok() {
+            return value.to_string()
+        }
+    }
+
+    if let Some(octal_value) = input.strip_prefix("0o") {
+        if let Some(value) = u32::from_str_radix(octal_value, 8).ok() {
+            return value.to_string()
+        }
+    }
+
+    // Couldn't convert from binary, hexadecimal and octal, just return the input string
+    input
 }
 
 #[cfg(test)]
