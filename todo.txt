@@ -3,5 +3,6 @@ TODO:
 * Add macros
 * Add symbol list support
 * Struct-like structures?
-* General: sfs implemetation in smisc-connect?
+* General: sfs implementation in smisc-connect?
 * Combine CLI-argument related stuff to library
+* Add persistent storage to vm

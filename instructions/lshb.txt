@@ -1,0 +1,49 @@
+lshb # Left shift by one byte
+x
+C7
+
+@STAGE
+PC_OUT
+MEM_ADDR_PTR_IN
+
+@STAGE
+PC_INC
+MEM_OUT
+INSTR_IN
+
+@STAGE
+CAL_REG_A_OUT
+ALU_IN_A
+
+@STAGE # left-shift 1/8
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 2/8
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 3/8
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 4/8
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 5/8
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 6/8
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 7/8
+LSH_OUT
+ALU_IN_A
+
+@STAGE # left-shift 8/8
+LSH_OUT
+CAL_REG_A_IN
+RESET_MICRO
