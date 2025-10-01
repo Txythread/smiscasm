@@ -33,6 +33,16 @@ fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections
             }
         }
 
+
+        // Look if it is an integer value
+        if let Some(replacement_value) = replacement.get_value().parse::<i32>().ok() {
+            // Generate bytes
+            output_replacements.push(Replacement::new(format!("{}@LSB", replacement.get_name()), (replacement_value & 0x00_00_00_ff).to_string(), replacement.get_is_function()));
+            output_replacements.push(Replacement::new(format!("{}@B1", replacement.get_name()), ((replacement_value & 0x00_00_ff_00) >> 8).to_string(), replacement.get_is_function()));
+            output_replacements.push(Replacement::new(format!("{}@B2", replacement.get_name()), ((replacement_value & 0x00_ff_00_00) >> 16).to_string(), replacement.get_is_function()));
+            output_replacements.push(Replacement::new(format!("{}@MSB", replacement.get_name()), ((replacement_value & 0xff_00_00_00u32 as i32) >> 24).to_string(), replacement.get_is_function()));
+        }
+
         // Add the normal replacements to the map, too
         output_replacements.push(replacement);
     }
