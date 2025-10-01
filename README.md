@@ -5,27 +5,11 @@ This project serves as an assembler and a linker for my SMISC (Stupid Mixed Inst
 This language only serves one purpose: easy to implement (physically) while still allowing for complex instructions.
 
 ## Installation
-### Install all of smisc (recommended)
 To install smiscasm, smiscvm and smisc-connect all at once, execute the following command:
 ```
 curl -s https://raw.githubusercontent.com/Txythread/smiscasm/master/install-smisc.sh | sh
 ```
 *This might ask you for your password. This is required to move binaries into `/usr/local/bin`. If you don't want to enter your password in someone's script, you can do this manually. Hint: If you want to do this, take a look at `production.sh` or `build.sh` in each of the downloaded directories if you wish to proceed this way.*
-
-### Install smiscasm only
-First, pull the repo.
-```
-git pull https://github.com/Txythread/smiscasm
-```
-Then, "cd" into it.
-```
-cd smiscasm
-```
-Lastly, execute the build script.
-```
-./production.sh
-```
-*This will ask you for your password. If you don't want this, cancel the script and execute `sudo mv target/debug/smiscasm /usr/local/bin` manually.*
 
 
 
