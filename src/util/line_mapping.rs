@@ -120,18 +120,18 @@ impl LineMap{
 
     // Summarize the compilation (show amount of errors & warnings and exit if needed)
     pub fn summarize(&self){
-        if self.errors_count > 0 || self.warnings_count > 0 {
+        if self.errors_count > 0 {
             // Create info
             let info = format!("Assembling failed with {} errors and {} warnings", self.errors_count, self.warnings_count);
 
-            // Print info in colors and exit if needed.
-            if self.errors_count > 0{
-                println!("{}", info.red().bold());
-                std::process::exit(105);
-            } else {
-                // Still some warnings
-                println!("{}", info.yellow().bold());
-            }
+            println!("{}", info.red().bold());
+            std::process::exit(105);
+        }
+
+        if self.warnings_count > 0 {
+            let info = format!("Assembling succeeded with 0 errors and {} warnings", self.warnings_count);
+            // Still some warnings
+            println!("{}", info.yellow().bold());
         }
     }
 }

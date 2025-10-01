@@ -1,4 +1,5 @@
 use std::i32;
+use convert_case::{Case, Casing};
 use crate::util::code_error::ErrorNotificationKind;
 use crate::util::replacement::Replacement;
 use crate::util::math::resolve_string;
@@ -48,6 +49,12 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
                     }
 
                     let name = line[3].clone();
+
+                    // Look if the name is uppercase as it should be
+                    if name.to_ascii_uppercase() != name{
+                        input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(3), "Naming Convention Not Met".to_string(), format!("Section names should be uppercase like \"{}\".", name.to_ascii_uppercase()));
+                    }
+
                     let section: (String, u32) = (name, bytes_count as u32);
                     result.sections.push(section);
                     current_section_start = bytes_count;
@@ -183,6 +190,12 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
                     }
 
 
+                    // Check if snake case was used
+                    if command.unwrap().clone().to_string() != command.unwrap().clone().to_string().to_case(Case::Snake){
+                        input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(1), "Naming Convention Not Met".to_string(), format!("Constant names should be snake case like \"{}\".", command.unwrap().clone().to_string().to_case(Case::Snake)));
+                    }
+
+
 
                     let replacement = Replacement::new(command.unwrap().to_string(), value.unwrap(), false);
                     result.constants.push(replacement);
@@ -194,14 +207,28 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
         let last_token = line.last().unwrap().to_string();
 
         if last_token == ":" {
-            let function_name = line.first().unwrap().to_string();
+            let label_name = line.first().unwrap().to_string();
             let default = &("NOSEC".to_string(), 0);
             let current_section = result.sections.last().unwrap_or(default);
             let current_section_name = current_section.0.clone();
             let bytes_in_section = bytes_count - current_section_start;
             let value = current_section_name.clone() + ":" + bytes_in_section.to_string().as_str();
 
-            let replacement = Replacement::new(function_name, value, true);
+            // Check whether naming conventions were met
+            if label_name.chars().nth(0) != Some('_'){
+                input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(0), "Naming Convention Not Met".to_string(), "The label misses the _ prefix".to_string());
+            }else{
+                let mut label_excluding_prefix = label_name.clone();
+                label_excluding_prefix.remove(0);
+
+                // Check whether snake case was used as expected
+                if label_excluding_prefix != label_excluding_prefix.to_case(Case::Snake){
+                    input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(0), "Naming Convention Not Met".to_string(), format!("The label should be snake case like \"_{}\"", label_excluding_prefix.to_case(Case::Snake)));
+                }
+            }
+
+
+            let replacement = Replacement::new(label_name.clone(), value, true);
             result.constants.push(replacement);
 
             continue;
