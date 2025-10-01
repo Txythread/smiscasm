@@ -1,2 +1,7 @@
 TODO:
 * Add section re-ordering to linker
+* Add macros
+* Add symbol list support
+* Struct-like structures?
+* General: sfs implemetation in smisc-connect?
+* Combine CLI-argument related stuff to library
