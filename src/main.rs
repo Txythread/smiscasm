@@ -1,3 +1,4 @@
+use clap::Parser;
 use std::env;
 use std::fmt::Debug;
 use std::fs;
@@ -7,7 +8,7 @@ use crate::assembler::assembler::assemble;
 use crate::help::help::{print_help, print_instruction_help};
 use std::fs::File;
 use std::io::prelude::*;
-use convert_case::{Case, Casing};
+use convert_case::Casing;
 use crate::util::exit::{exit, ExitCode};
 
 mod util;
@@ -15,14 +16,24 @@ mod instruction;
 mod assembler;
 mod help;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Parser)]
 pub struct ArgumentList{
     pub file: Option<String>,
-    pub help: bool,                             // -h or --help
-    pub instruction_help: Option<String>,       // --instruction-help
-    pub output_name: Option<String>,            // -o or --output
-    pub get_micro_operation: Option<String>,    // --get-micro-operation
-    pub generate_instruction_table: bool,       // --generate-instructions-table
+
+    #[clap(short, long)]
+    pub help: bool,                                 // -h or --help
+
+    #[clap(long)]
+    pub instruction_help: Option<Option<String>>,   // --instruction-help
+
+    #[clap(short, long)]
+    pub output_name: Option<Option<String>>,        // -o or --output
+
+    #[clap(short, long, num_args = 0..=1)]
+    pub get_micro_operation: Option<Option<String>>,// --get-micro-operation
+
+    #[clap(short, long)]
+    pub generate_instruction_table: bool,           // --generate-instructions-table
 }
 
 impl ArgumentList{
@@ -43,15 +54,15 @@ async fn main() {
     let cli_args: Vec<String> = env::args().collect();
 
     // Generate a reasonable argument list
-    let mut args = get_arguments_from_list(cli_args);
+    let mut args = ArgumentList::parse();
 
     if args.help { print_help(args); return; }
 
-    if args.instruction_help.is_some() { print_instruction_help(args.instruction_help.unwrap()); return; }
+    if args.instruction_help.is_some() { print_instruction_help(args.instruction_help.unwrap().unwrap()); return; }
 
     if args.generate_instruction_table { generate_instruction_table(); return; }
 
-    if args.get_micro_operation.is_some() { get_micro_operation(args.get_micro_operation.unwrap().to_string()); return;}
+    if args.get_micro_operation.is_some() { get_micro_operation(args.get_micro_operation.unwrap().unwrap().to_string()); return;}
 
     // There is something to assemble
 
@@ -84,11 +95,11 @@ async fn main() {
 
     // Generate the output file name in case it doesn't exist.
     if args.output_name.is_none(){
-        args.output_name = Some(args.file.clone().unwrap().to_string().clone().strip_suffix(".s").unwrap().to_string());
-        args.output_name = Some(args.output_name.unwrap().clone() + ".o");
+        args.output_name = Some(Some(args.file.clone().unwrap().to_string().clone().strip_suffix(".s").unwrap().to_string()));
+        args.output_name = Some(Some(args.output_name.unwrap().unwrap().clone() + ".o"));
     }
 
-    let mut file = File::create(args.output_name.clone().unwrap()).unwrap();
+    let mut file = File::create(args.output_name.clone().unwrap().unwrap()).unwrap();
 
     file.write_all(binary.as_slice()).unwrap();
 }
@@ -229,114 +240,4 @@ pub fn expand_path(path_str: &str) -> Option<PathBuf> {
     };
 
     Some(expanded)
-}
-
-fn get_arguments_from_list(args: Vec<String>) -> ArgumentList {
-    // Remove the first argument as it's just the name of the bin
-    let mut args = args;
-    args.remove(0);
-
-    // Make space for the result
-    let mut result = ArgumentList::new();
-
-    // Sort the arguments
-    // The first out-of-context (not belonging or being connected to a flag (-)) is the input file
-    let mut current_flag: Option<String> = None;
-
-    for arg in args {
-        if let Some(arg_first_char) = arg.chars().nth(0){
-            // Check if this argument is necessary for the last flag
-            if let Some(flag) = current_flag.clone(){
-                let value = arg.clone();
-
-                // Add it if it is not a call for help
-                if value == "--help" || value == "-h" {
-                    result.help = true;
-                }
-
-                match flag.as_str() {
-                    "-o" | "--output" => {
-                        result.output_name = Some(value);
-                    }
-
-                    "--get-micro-operation" => {
-                        result.get_micro_operation = Some(value);
-                    }
-
-                    "--instruction-help" => {
-                        result.instruction_help = Some(value);
-                    }
-
-                    _=>{
-                        exit(format!("Unknown flag {}.", flag), ExitCode::BadArgument);
-                    }
-                }
-
-                current_flag = None;
-                continue;
-            }
-
-            // Check if the argument is a flag
-            if arg_first_char == '-' {
-                // This is a flag
-                // Therefore, look if the next argument also needs to be checked or the argument can be added right away
-
-                match arg.as_str() {
-                    "-h" | "--help" => {
-                        result.help = true;
-                    }
-
-                    "--generate-instruction-table" => {
-                        result.generate_instruction_table = true;
-                    }
-
-
-                    _=>{
-                        current_flag = Some(arg);
-                    }
-                }
-                continue;
-            }
-
-            // The argument is not a flag, nor is it used after a flag, ...
-            // ... so it has to be the name of the file
-            if result.file.is_some(){
-                exit(format!("\"{}\" and \"{:?}\" can't both be input files.", result.file.clone().unwrap(), arg), ExitCode::BadArgument);
-            }
-
-            // Isn't yet written, so add the file name
-            result.file = Some(arg);
-        }
-    }
-
-    if current_flag.is_some() && !result.help {
-        exit("All flags that act like parameters must have their second part provided.".to_string(), ExitCode::BadArgument);
-    }
-
-    if current_flag.is_some() {
-        // Set the argument anyway as help is requested.
-        match current_flag.clone().unwrap().as_str() {
-            "-o" | "--output" => {
-                result.output_name = Some("".to_string());
-            }
-
-            "--get-micro-operation" => {
-                result.get_micro_operation = Some("".to_string());
-            }
-
-            "--instruction-help" => {
-                result.instruction_help = Some("".to_string());
-            }
-
-            _=>{
-                exit(format!("Unknown flag {}.", current_flag.unwrap()), ExitCode::BadArgument);
-            }
-        }
-    }
-
-    if result.needs_input_file(){
-        exit("No input files provided.".to_string(), ExitCode::BadArgument);
-    }
-
-    result
 }
