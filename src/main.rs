@@ -7,6 +7,7 @@ use crate::assembler::assembler::assemble;
 use crate::help::help::{print_help, print_instruction_help};
 use std::fs::File;
 use std::io::prelude::*;
+use convert_case::{Case, Casing};
 use crate::util::exit::{exit, ExitCode};
 
 mod util;

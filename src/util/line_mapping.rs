@@ -3,18 +3,20 @@
 
 use termimad::crossterm::style::Stylize;
 use crate::util::code_error::{display_code_error, ErrorNotificationKind};
+use crate::util::replacement::Replacement;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LineMap{
-    pub lines: Vec<LineInfo>,       // The lines that currently exist. Current & Real lines are not one-to-one.
-    pub stop_after_step: bool,      // Stop after the current step has been executed, but finish this one.
-    pub warnings_count: usize,      // The amount of warnings
-    pub errors_count: usize,        // The amount of errors. If > 0, compilation will not succeed.
+    pub lines: Vec<LineInfo>,           // The lines that currently exist. Current & Real lines are not one-to-one.
+    pub stop_after_step: bool,          // Stop after the current step has been executed, but finish this one.
+    pub warnings_count: usize,          // The amount of warnings
+    pub errors_count: usize,            // The amount of errors. If > 0, compilation will not succeed.
+    current_mode: CodeInterpretationMode// For adding new lines only, this is a help structure and should never be exposed.
 }
 
 impl LineMap{
     pub fn new() -> LineMap{
-        LineMap{lines: Vec::new(), stop_after_step: false, warnings_count: 0, errors_count: 0 }
+        LineMap{lines: Vec::new(), stop_after_step: false, warnings_count: 0, errors_count: 0, current_mode: CodeInterpretationMode::None }
     }
 
     #[cfg(test)]
@@ -25,12 +27,18 @@ impl LineMap{
             lines.push(LineInfo::new("as as sas asd".to_string(), 0, vec![(0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1)], i));
         }
 
-        LineMap { lines, stop_after_step: false, warnings_count:0, errors_count:0 }
+        LineMap { lines, stop_after_step: false, warnings_count:0, errors_count:0, current_mode: CodeInterpretationMode::None }
     }
 
     /// Add a line in the next position
     pub fn add_line(&mut self, line: LineInfo){
+        let mut line = line.clone();
+        line.attributes.mode = self.clone().current_mode;
         self.lines.push(line);
+    }
+
+    pub fn set_mode(&mut self, mode: CodeInterpretationMode){
+        self.current_mode = mode;
     }
 
     /// Print an error/warning for a line.
@@ -142,12 +150,27 @@ pub struct LineInfo {
     indent: u32,                // The indent (in spaces) this line has (for formatting)
     pub token_info: Vec<(u32, u32)>,// The start of a token and its length
     pub line_number: u32,           // The original line number
+    pub attributes: LineAttributes,
+}
+
+
+#[derive(Clone, Debug)]
+pub struct LineAttributes{
+    pub line_specific_constants: Vec<Replacement>,
+    pub mode: CodeInterpretationMode,
+}
+
+#[derive(Clone, Debug, Copy)]
+pub enum CodeInterpretationMode{
+    Text,
+    Data,
+    None
 }
 
 impl LineInfo{
     #[cfg(test)]
     pub fn new(contents: String, indent: u32, token_info: Vec<(u32, u32)>, line_number: u32) -> LineInfo{
-        LineInfo{contents, indent, token_info, line_number}
+        LineInfo{contents, indent, token_info, line_number, attributes: LineAttributes { line_specific_constants: Vec::new(), mode: CodeInterpretationMode::None } }
     }
 
     /// Generate a new LineInfo with text only, without any info about tokens.
@@ -164,6 +187,6 @@ impl LineInfo{
 
         let contents = line.trim().to_string();
 
-        LineInfo { contents, indent: line_whitespace_length, token_info: vec![], line_number }
+        LineInfo { contents, indent: line_whitespace_length, token_info: vec![], line_number, attributes: LineAttributes { line_specific_constants: vec![], mode: CodeInterpretationMode::None } }
     }
 }

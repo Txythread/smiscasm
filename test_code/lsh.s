@@ -1,6 +1,7 @@
 .msb 0x40
 .lsb 0x48
 
+.mode text
 .section "CODE"
 
 _start:

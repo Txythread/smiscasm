@@ -3,7 +3,7 @@ use convert_case::{Case, Casing};
 use crate::util::code_error::ErrorNotificationKind;
 use crate::util::replacement::Replacement;
 use crate::util::math::resolve_string;
-use crate::util::line_mapping::LineMap;
+use crate::util::line_mapping::{CodeInterpretationMode, LineMap};
 
 /// Find global constant declarations and labels (function definitions) in code and separate them.
 pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenResult, LineMap){
@@ -18,6 +18,9 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
     let mut current_section_start = 0;
 
     let mut global_constants_names: Vec<String> = Vec::new();
+
+    // What kind of info the assembler expects
+    let mut mode: CodeInterpretationMode = CodeInterpretationMode::None;
 
     // Go through the code line by line and resolve all the ones starting with a '.'.
     for i in code.iter().enumerate(){
@@ -92,6 +95,50 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
 
                     let line_number_in_result = result.code.len() - 1;
                     result.line_mapping.push((line_number_in_result, line_number));
+
+
+                    // Look if the mode in use is qualified for data
+                    if !(matches!(mode, CodeInterpretationMode::None) || matches!(mode, CodeInterpretationMode::Data)) {
+                        // Probably in text section, throw a warning
+                        input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(1), "Data In Non-Data Mode".to_string(), "This is not written in a data-accepting mode. Add \".mode data\" before this too remove this warning.".parse().unwrap());
+                    }
+                }
+
+                "mode" => {
+                    // Change what kind of data is expected
+                    if line.len() != 3{
+                        input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Error, line_number as u32, 2, (line.len() - 1) as u32 /* all remaining tokens*/, "Compiler command formatting error".to_string(), "The mode command requires a mode (such as text, data or none) as an argument, but this was not satisfied.".to_string());
+
+                        // Set the mode to None to not generate unnecessary complaints
+                        mode = CodeInterpretationMode::None;
+                        output_line_map.set_mode(mode); // Set the mode to preserve the information for later stages
+
+                        continue;
+                    }
+
+                    let mode_text = line.iter().nth(2).unwrap();
+
+                    match mode_text.to_lowercase().as_str(){
+                        "data" => { mode = CodeInterpretationMode::Data; }
+                        "none" => { mode = CodeInterpretationMode::None; }
+                        "text" | "code" => { mode = CodeInterpretationMode::Text; }
+                        _ => {
+                            input_line_map.print_notification(ErrorNotificationKind::Error, line_number as u32, Some(2), "No Such Mode".to_string(), format!("There is no such mode: {}. Available modes include: data, text & none.", mode_text));
+
+                            // Set the mode to None to not generate unnecessary complaints
+                            mode = CodeInterpretationMode::None;
+                            output_line_map.set_mode(mode);
+
+                            continue;
+                        }
+                    }
+
+                    // Set the mode to preserve the information for later stages
+                    output_line_map.set_mode(mode);
+
+                    if mode_text.to_lowercase().as_str() != mode_text{
+                        input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(2), "Mode Naming Convention Not Followed".to_string(), format!("Mode names should be lowercase, but \"{}\" doesn't follow this.", mode_text));
+                    }
                 }
 
                 "global" => {
@@ -215,16 +262,21 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
             let value = current_section_name.clone() + ":" + bytes_in_section.to_string().as_str();
 
             // Check whether naming conventions were met
-            if label_name.chars().nth(0) != Some('_'){
-                input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(0), "Naming Convention Not Met".to_string(), "The label misses the _ prefix".to_string());
-            }else{
-                let mut label_excluding_prefix = label_name.clone();
-                label_excluding_prefix.remove(0);
+            let mut test_label_name = label_name.clone();
 
-                // Check whether snake case was used as expected
-                if label_excluding_prefix != label_excluding_prefix.to_case(Case::Snake){
-                    input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(0), "Naming Convention Not Met".to_string(), format!("The label should be snake case like \"_{}\"", label_excluding_prefix.to_case(Case::Snake)));
+
+            if matches!(mode.clone(), CodeInterpretationMode::Text){
+                // Expected _ prefix. Also, remove the character from the test.
+                if test_label_name.chars().nth(0) != Some('_') {
+                    input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(0), "Naming Convention Not Met".to_string(), "The label misses the _ prefix or the mode is not set correctly.".to_string());
                 }
+                test_label_name.remove(0);
+            }
+
+
+            // Check whether snake case was used as expected
+            if test_label_name != test_label_name.to_case(Case::Snake) {
+                input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(0), "Naming Convention Not Met".to_string(), format!("The label should be snake case like \"(_){}\"", test_label_name.to_case(Case::Snake)));
             }
 
 
@@ -245,8 +297,14 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
             result.constants.push(Replacement::new(global_constant_name, "".to_string(), false));
         }
 
-        // Not an assembler command, just add it to the list.
+        // Neither assembler command nor label, just add it to the list and check that it is in place.
         result.code.push(line.clone());
+
+        if !matches!(mode.clone(), CodeInterpretationMode::Text) && !matches!(mode.clone(), CodeInterpretationMode::None) {
+            // Instructions in data mode!
+            // Be a snitch, report 'em.
+            input_line_map.print_notification_multiple_faulty_tokens(ErrorNotificationKind::Warning, line_number as u32, 0, (line.len() - 1) as u32, "Code In Inappropriate Section".to_string(), "All code should be in text sections, but is in a data section.".to_string());
+        }
 
         let line_number_in_result = result.code.len() - 1;
         result.line_mapping.push((line_number_in_result, line_number));
