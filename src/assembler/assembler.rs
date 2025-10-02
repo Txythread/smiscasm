@@ -7,17 +7,14 @@ use crate::assembler::valuerepl::replace_values_in_code;
 use crate::assembler::zstep::perform_last_step;
 use crate::instruction::instruction::Instruction;
 
-/// The size of the memory page and the max size for immediate values.
-pub const MEMORY_PAGE_SIZE: usize = 4096;
-
 /// Links & assembles code given an instruction set
 pub async fn assemble(code: String, instructions: Vec<Instruction>) -> Vec<u8> {
-    let mut inclusive = perform_inclusions(code).await;
-    let mut preprocessed = preprocess(inclusive.0, inclusive.1).await;
-    let mut splitted = split(preprocessed.0, preprocessed.1);
-    let mut value_gen_result = gen_values(splitted.0, splitted.1);
-    let mut value_repl_result = replace_values_in_code(value_gen_result.0, value_gen_result.1);
-    let mut tokenized = tokenize(value_repl_result.0, value_repl_result.1);
+    let inclusive = perform_inclusions(code).await;
+    let preprocessed = preprocess(inclusive.0, inclusive.1).await;
+    let splitted = split(preprocessed.0, preprocessed.1);
+    let value_gen_result = gen_values(splitted.0, splitted.1);
+    let value_repl_result = replace_values_in_code(value_gen_result.0, value_gen_result.1);
+    let tokenized = tokenize(value_repl_result.0, value_repl_result.1);
     let binary = perform_last_step(tokenized.0, instructions, tokenized.1);
 
 

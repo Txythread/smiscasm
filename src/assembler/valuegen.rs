@@ -1,5 +1,6 @@
 use std::i32;
 use convert_case::{Case, Casing};
+use crate::config::DEFAULT_MODE;
 use crate::util::code_error::ErrorNotificationKind;
 use crate::util::replacement::Replacement;
 use crate::util::math::resolve_string;
@@ -20,7 +21,7 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
     let mut global_constants_names: Vec<String> = Vec::new();
 
     // What kind of info the assembler expects
-    let mut mode: CodeInterpretationMode = CodeInterpretationMode::None;
+    let mut mode: CodeInterpretationMode = DEFAULT_MODE;
 
     // Go through the code line by line and resolve all the ones starting with a '.'.
     for i in code.iter().enumerate(){

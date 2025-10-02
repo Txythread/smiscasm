@@ -8,13 +8,13 @@ use crate::assembler::assembler::assemble;
 use crate::help::help::{print_help, print_instruction_help};
 use std::fs::File;
 use std::io::prelude::*;
-use convert_case::Casing;
 use crate::util::exit::{exit, ExitCode};
 
 mod util;
 mod instruction;
 mod assembler;
 mod help;
+mod config;
 
 #[derive(Debug, PartialEq, Parser)]
 pub struct ArgumentList{

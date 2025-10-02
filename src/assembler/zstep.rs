@@ -1,5 +1,5 @@
 use colorize::AnsiColor;
-use crate::assembler::assembler::MEMORY_PAGE_SIZE;
+use crate::config::*;
 use crate::assembler::tokenizer::{InstructionArgs, Line, TokenizerResult};
 use crate::instruction::instruction::*;
 use crate::util::code_error::ErrorNotificationKind;

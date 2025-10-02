@@ -2,6 +2,7 @@
 // from another file in a later phase of assembly.
 
 use termimad::crossterm::style::Stylize;
+use crate::config::*;
 use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 use crate::util::replacement::Replacement;
 
@@ -16,7 +17,7 @@ pub struct LineMap{
 
 impl LineMap{
     pub fn new() -> LineMap{
-        LineMap{lines: Vec::new(), stop_after_step: false, warnings_count: 0, errors_count: 0, current_mode: CodeInterpretationMode::None }
+        LineMap{lines: Vec::new(), stop_after_step: false, warnings_count: 0, errors_count: 0, current_mode: DEFAULT_MODE }
     }
 
     #[cfg(test)]
@@ -27,7 +28,7 @@ impl LineMap{
             lines.push(LineInfo::new("as as sas asd".to_string(), 0, vec![(0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1)], i));
         }
 
-        LineMap { lines, stop_after_step: false, warnings_count:0, errors_count:0, current_mode: CodeInterpretationMode::None }
+        LineMap { lines, stop_after_step: false, warnings_count:0, errors_count:0, current_mode: DEFAULT_MODE }
     }
 
     /// Add a line in the next position

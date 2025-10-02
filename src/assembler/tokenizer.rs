@@ -1,5 +1,5 @@
 use std::process::Command;
-use crate::assembler::assembler::MEMORY_PAGE_SIZE;
+use crate::config::*;
 use crate::util::replacement::Replacement;
 use crate::assembler::valuerepl::{LineKind, ValueReplResult};
 use crate::assembler::tokenizer::InstructionArgs::{Global, Immediate, Register};
