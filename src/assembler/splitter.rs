@@ -191,6 +191,9 @@ pub fn split(input: Vec<String>, mut input_line_map: LineMap) -> (Vec<Vec<String
     output_line_map.warnings_count = input_line_map.warnings_count;
     output_line_map.errors_count = input_line_map.errors_count;
 
+
+    output_line_map.exit_if_needed();
+
     (all_tokens, output_line_map)
 }
 

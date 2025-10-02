@@ -55,6 +55,9 @@ pub async fn preprocess(code: String, input_line_map: LineMap) -> (Vec<String>, 
     output_line_map.warnings_count = input_line_map.warnings_count;
     output_line_map.errors_count = input_line_map.errors_count;
 
+
+    output_line_map.exit_if_needed();
+
     (lines, output_line_map)
 }
 

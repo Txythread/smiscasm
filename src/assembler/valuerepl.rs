@@ -190,6 +190,9 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
     output_line_mapping.errors_count = input_line_mapping.errors_count;
     output_line_mapping.stop_after_step = input_line_mapping.stop_after_step;
 
+
+    output_line_mapping.exit_if_needed();
+
     (result, output_line_mapping)
 }
 

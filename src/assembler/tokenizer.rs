@@ -32,7 +32,7 @@ pub fn tokenize(from: ValueReplResult, mut input_line_map: LineMap) -> (Tokenize
 
         match kind {
             LineKind::ASCII => {
-                result.code.push(Line::ASCII(code[0].clone()));
+                result.code.push(Line::RAW(code[0].clone().into_bytes()));
                 continue;
             }
 
@@ -65,7 +65,7 @@ pub fn tokenize(from: ValueReplResult, mut input_line_map: LineMap) -> (Tokenize
 
                 let stc_values = stc_values_array.iter().map(|&x| x.parse().unwrap()).collect();
 
-                result.code.push(Line::STC(stc_values));
+                result.code.push(Line::RAW(stc_values));
             }
 
             LineKind::Code(_) => {
@@ -126,6 +126,8 @@ pub fn tokenize(from: ValueReplResult, mut input_line_map: LineMap) -> (Tokenize
     output_line_map.warnings_count = input_line_map.warnings_count;
 
 
+    output_line_map.exit_if_needed();
+
     (result, output_line_map)
 }
 
@@ -138,8 +140,7 @@ pub struct TokenizerResult {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Line{
     Instruction(String, Vec<InstructionArgs>),      // Name and args
-    ASCII(String),                                  // ASCII Text
-    STC(Vec<u8>),                                   // STC Text values
+    RAW(Vec<u8>),                                   // Raw data (such as STC text values)
 }
 
 
@@ -197,7 +198,7 @@ mod tests {
         let expected_output_code: Vec<Line> = vec![
             Line::Instruction("adrp".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(2048)]),
             Line::Instruction("add".to_string(), vec![InstructionArgs::Register(0), InstructionArgs::Immediate(0)]),
-            Line::ASCII("Hi".to_string()),
+            Line::RAW("Hi".to_string().into_bytes()),
         ];
 
         let line_map = LineMap::test_map();

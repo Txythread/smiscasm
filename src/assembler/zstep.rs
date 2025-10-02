@@ -74,6 +74,7 @@ pub fn perform_last_step(input: TokenizerResult, instructions: Vec<Instruction>,
                 let instruction = correctly_named_instructions.iter().find(|&x| x.format == format);
 
                 if instruction.is_none(){
+                    // Print an error and add the format
                     let mut error = format!("Instruction named '{}' with format (", name);
                     let mut error_format_string = String::new();
                     for format in format.iter() {
@@ -91,6 +92,7 @@ pub fn perform_last_step(input: TokenizerResult, instructions: Vec<Instruction>,
                     error += error_format_string.as_str();
                     error += ") doesn't exist.";
 
+                    // Add other available formats if possible
                     if !correctly_named_instructions.is_empty() {
                         error += "\nBut there are instructions with the same name available in other formats: ";
                         for x in correctly_named_instructions.clone(){
@@ -163,11 +165,7 @@ pub fn perform_last_step(input: TokenizerResult, instructions: Vec<Instruction>,
                 }
             }
 
-            Line::ASCII(text) => {
-                append_ascii_string_to_vec(&mut result, &mut actual_bytes_written, text.clone());
-            }
-
-            Line::STC(text_stc_values) => {
+            Line::RAW(text_stc_values) => {
                 append_vector_to_vec(&mut result, &mut actual_bytes_written, text_stc_values);
             }
         }

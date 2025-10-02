@@ -163,6 +163,9 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
 
     let code = result.join("\n");
 
+
+    line_map.exit_if_needed();
+
     (code, line_map)
 }
 

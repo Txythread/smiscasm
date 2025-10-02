@@ -262,6 +262,9 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
     output_line_map.errors_count = input_line_map.errors_count;
     output_line_map.warnings_count = input_line_map.warnings_count;
 
+
+    output_line_map.exit_if_needed();
+
     (result, output_line_map)
 }
 
