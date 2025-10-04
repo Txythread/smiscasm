@@ -60,7 +60,7 @@ SKIP_DOWNLOAD=0 # Skip at default
 
 cd smiscasm 1>/dev/null 2>/dev/null
 
-if [ $0 -ne 0 ]; then
+if [ $? -ne 0 ]; then
   SKIP_DOWNLOAD=1 # Don't skip
 
 else
@@ -70,7 +70,7 @@ fi
 
 cd smiscvm 1>/dev/null 2>/dev/null
 
-if [ $0 -ne 0 ]; then
+if [ $? -ne 0 ]; then
   SKIP_DOWNLOAD=1 # Don't skip
 
 else
@@ -79,7 +79,7 @@ fi
 
 cd smisc-connect 1>/dev/null 2>/dev/null
 
-if [ $0 -ne 0 ]; then
+if [ $? -ne 0 ]; then
   SKIP_DOWNLOAD=1 # Don't skip
 
 else
