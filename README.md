@@ -112,6 +112,8 @@ Example instruction:
 
 ```add x1, 5```
 
+*Note: Only the first register passed can be modified by the CPU. If an instruction takes twl registers as arguments, the second one can drive the main bus, but physically not be fed by it.*
+
 
 ### Comments
 Comments are defined using a `'#'`. They exclude everything after themselves (plus themselves) from the line in the early stages of assembling.
