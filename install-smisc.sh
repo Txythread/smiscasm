@@ -4,7 +4,7 @@
 which cargo 1>/dev/null
 
 if [ $? -ne 0 ]; then
-	echo "Couldn't ivoke cargo. Is rust installed correctly?!" 1>&2
+	echo "Couldn't invoke cargo. Is rust installed correctly?!" 1>&2
 	exit 1
 fi
 
@@ -35,7 +35,7 @@ fi
 which cc 1>/dev/null
 
 if [ $? -ne 0 ]; then
-	echo "Couldn't invoke cc. Please install cc to proceed" 1>&2
+	echo "Couldn't invoke (g)cc. Please install cc to proceed" 1>&2
 	exit 1
 fi
 
@@ -55,15 +55,67 @@ if [ $? -ne 0 ]; then
 fi
 
 
-# Install the github repos
-echo "Pulling github repos ..."
-git clone https://github.com/Txythread/smiscasm
-git clone https://github.com/Txythread/smiscvm
-git clone https://github.com/Txythread/smisc-connect
+# Look if the github repos have been installed already
+SKIP_DOWNLOAD=0 # Skip at default
 
-wait $!
+cd smiscasm 1>/dev/null 2>/dev/null
+
+if [ $0 -ne 0 ]; then
+  SKIP_DOWNLOAD=1 # Don't skip
+
+else
+  cd ..
+fi
 
 
+cd smiscvm 1>/dev/null 2>/dev/null
+
+if [ $0 -ne 0 ]; then
+  SKIP_DOWNLOAD=1 # Don't skip
+
+else
+  cd ..
+fi
+
+cd smisc-connect 1>/dev/null 2>/dev/null
+
+if [ $0 -ne 0 ]; then
+  SKIP_DOWNLOAD=1 # Don't skip
+
+else
+  cd ..
+fi
+
+
+
+if [ $SKIP_DOWNLOAD -ne 0 ]; then
+
+  # Install the github repos
+  echo "Pulling github repos ..."
+  git clone https://github.com/Txythread/smiscasm
+  git clone https://github.com/Txythread/smiscvm
+  git clone https://github.com/Txythread/smisc-connect
+
+  wait $!
+
+
+else
+  # Remove the leftovers if requested.
+  printf "Do you want to download updates for previously installed repos? [y/N] "
+  read -r response </dev/tty
+  case "$response" in
+      ([yY][eE][sS]|[yY])
+          cd smiscasm
+          git pull
+          cd smiscvm
+          git pull
+          cd smisc-connect
+          git pull
+          ;;
+      (*)
+          ;;
+  esac
+fi
 
 echo "Executing build scripts ..."
 echo "Note: This might take a while."

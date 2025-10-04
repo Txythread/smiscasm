@@ -3,7 +3,7 @@
 cargo --version 1>/dev/null
 
 if [ $? -ne 0 ]; then
-	echo "Couldn't ivoke cargo. Is rust installed correctly?!" 1>&2
+	echo "Couldn't invoke cargo. Is rust installed correctly?!" 1>&2
 	exit 1
 fi
 
