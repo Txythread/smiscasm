@@ -107,10 +107,17 @@ else
       ([yY][eE][sS]|[yY])
           cd smiscasm
           git pull
+	  wait $!
+
+	  cd ..
           cd smiscvm
           git pull
-          cd smisc-connect
+	  wait $!
+
+          cd ..
+	  cd smisc-connect
           git pull
+	  wait $!
           ;;
       (*)
           ;;
