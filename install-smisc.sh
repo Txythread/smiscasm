@@ -118,6 +118,8 @@ else
 	  cd smisc-connect
           git pull
 	  wait $!
+
+	  cd ..
           ;;
       (*)
           ;;
