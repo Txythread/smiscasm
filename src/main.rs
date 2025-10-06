@@ -1,3 +1,4 @@
+use colorize::AnsiColor;
 use clap::Parser;
 use std::env;
 use std::fmt::Debug;
@@ -70,38 +71,47 @@ async fn main() {
     let instructions = instruction::instruction::get_all_instructions();
 
     // Load the file
-    let path = expand_path(&args.file.clone().unwrap()).unwrap();
-    let input_file = fs::read_to_string(path.clone());
+
+    if let Some(relative_path) = &args.file.clone(){
+
+        let path = expand_path(relative_path).unwrap();
+        let input_file = fs::read_to_string(path.clone());
 
 
-    if input_file.is_err() {
-        exit(format!("Input file not found: {}", path.to_str().unwrap().to_string()), ExitCode::BadArgument);
+        if input_file.is_err() {
+            exit(format!("Input file not found: {}", path.to_str().unwrap().to_string()), ExitCode::BadArgument);
+        }
+
+        let input_file = input_file.unwrap();
+
+        // Check the file is in the same dir
+
+        // The amount of dirs between PWD and file
+        let amount_of_subdirs = path.to_str().unwrap().split('/').count() - 1;
+
+        if amount_of_subdirs > 0 {
+            exit(format!("Input file must be directly beneath the working directory, but there are {} directories in between.", amount_of_subdirs), ExitCode::BadArgument);
+
     }
 
-    let input_file = input_file.unwrap();
 
-    // Check the file is in the same dir
 
-    // The amount of dirs between PWD and file
-    let amount_of_subdirs = path.to_str().unwrap().split('/').count() - 1;
+        let binary = assemble(input_file, instructions).await;
 
-    if amount_of_subdirs > 0 {
-        exit(format!("Input file must be directly beneath the working directory, but there are {} directories in between.", amount_of_subdirs), ExitCode::BadArgument);
+        // Generate the output file name in case it doesn't exist.
+        if args.output_name.is_none(){
+            args.output_name = Some(Some(args.file.clone().unwrap().to_string().clone().strip_suffix(".s").unwrap().to_string()));
+            args.output_name = Some(Some(args.output_name.unwrap().unwrap().clone() + ".o"));
+        }
+
+        let mut file = File::create(args.output_name.clone().unwrap().unwrap()).unwrap();
+
+        file.write_all(binary.as_slice()).unwrap();
+
+        return
     }
 
-
-
-    let binary = assemble(input_file, instructions).await;
-
-    // Generate the output file name in case it doesn't exist.
-    if args.output_name.is_none(){
-        args.output_name = Some(Some(args.file.clone().unwrap().to_string().clone().strip_suffix(".s").unwrap().to_string()));
-        args.output_name = Some(Some(args.output_name.unwrap().unwrap().clone() + ".o"));
-    }
-
-    let mut file = File::create(args.output_name.clone().unwrap().unwrap()).unwrap();
-
-    file.write_all(binary.as_slice()).unwrap();
+    println!("{}", "Nothing to do".to_string().red());
 }
 
 fn get_micro_operation(idx: String) {
