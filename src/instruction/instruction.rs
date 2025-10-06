@@ -12,7 +12,7 @@ Personal Comment:
         (0/8)
 
     also missing:
-            registers (untested, not enough)
+            registers (working, not enough)
             clock (untested)
             more buffers!
 
