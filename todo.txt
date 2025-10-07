@@ -7,6 +7,6 @@ TODO:
 * Combine CLI-argument related stuff to library
 * Add persistent storage to vm
 * Upload register design files
-
+* Add files names to errors
 
 

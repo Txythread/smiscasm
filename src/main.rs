@@ -51,9 +51,6 @@ impl ArgumentList{
 
 #[tokio::main]
 async fn main() {
-    // Retrieve arguments from the terminal first
-    let cli_args: Vec<String> = env::args().collect();
-
     // Generate a reasonable argument list
     let mut args = ArgumentList::parse();
 

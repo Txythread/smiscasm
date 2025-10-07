@@ -55,7 +55,7 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
                     let name = line[3].clone();
 
                     // Look if the name is uppercase as it should be
-                    if name.to_ascii_uppercase() != name{
+                    if name.to_ascii_uppercase() != name {
                         input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(3), "Naming Convention Not Met".to_string(), format!("Section names should be uppercase like \"{}\".", name.to_ascii_uppercase()));
                     }
 
