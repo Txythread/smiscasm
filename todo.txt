@@ -6,3 +6,7 @@ TODO:
 * General: sfs implementation in smisc-connect?
 * Combine CLI-argument related stuff to library
 * Add persistent storage to vm
+* Upload register design files
+
+
+
