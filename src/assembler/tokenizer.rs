@@ -3,6 +3,7 @@ use crate::config::*;
 use crate::util::replacement::Replacement;
 use crate::assembler::valuerepl::{LineKind, ValueReplResult};
 use crate::assembler::tokenizer::InstructionArgs::{Global, Immediate, Register};
+use crate::assembler::valuegen::Section;
 use crate::util::code_error::ErrorNotificationKind;
 use crate::util::line_mapping::LineMap;
 
@@ -12,7 +13,7 @@ pub fn tokenize(from: ValueReplResult, mut input_line_map: LineMap) -> (Tokenize
     let mut result = TokenizerResult {
         code: vec![],
         global_constants: vec![],
-        sections: from.sections.clone(),
+        sections: from.sections.iter().clone().map(|x|x.clone()).collect(),
     };
     let mut output_line_map = LineMap::new();
 
@@ -134,7 +135,7 @@ pub fn tokenize(from: ValueReplResult, mut input_line_map: LineMap) -> (Tokenize
 pub struct TokenizerResult {
     pub code: Vec<Line>,
     pub global_constants: Vec<Replacement>,
-    pub sections: Vec<(String, u32)>,
+    pub sections: Vec<Section>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -156,6 +157,7 @@ pub enum InstructionArgs{
 mod tests {
     use crate::assembler::valuerepl::{LineKind, ValueReplResult};
     use crate::assembler::tokenizer::{tokenize, InstructionArgs, Line};
+    use crate::assembler::valuegen::Section;
     use crate::util::line_mapping::LineMap;
     use crate::util::replacement::Replacement;
 
@@ -172,9 +174,9 @@ mod tests {
         input_constants[0].set_is_global(true);
         input_constants[3].set_is_global(true);
 
-        let input_sections : Vec<(String, u32)>= vec![
-            ("CODE".to_string(), 0),
-            ("DATA".to_string(), 1),
+        let input_sections : Vec<Section>= vec![
+            Section { name: "CODE".to_string(), start_offset: 0, start_memory_page: 0, start_pos_bytes_original: 0 },
+            Section { name: "DATA".to_string(), start_offset: 1, start_memory_page: 1, start_pos_bytes_original: 1 },
         ];
 
 

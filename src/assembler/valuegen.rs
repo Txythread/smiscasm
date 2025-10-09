@@ -59,8 +59,18 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
                         input_line_map.print_notification(ErrorNotificationKind::Warning, line_number as u32, Some(3), "Naming Convention Not Met".to_string(), format!("Section names should be uppercase like \"{}\".", name.to_ascii_uppercase()));
                     }
 
-                    let section: (String, u32) = (name, bytes_count as u32);
+                    //let section: (String, u32) = (name, bytes_count as u32);
+
+                    // The next page, change this in the future when reordering gets implement fr
+                    let memory_page = result.sections.len();
+
+                    // The offset within the page
+                    let memory_page_offset = 0;
+
+                    let section = Section { name, start_pos_bytes_original: bytes_count, start_memory_page: memory_page, start_offset: memory_page_offset };
                     result.sections.push(section);
+
+
                     current_section_start = bytes_count;
                 }
 
@@ -256,9 +266,9 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
 
         if last_token == ":" {
             let label_name = line.first().unwrap().to_string();
-            let default = &("NOSEC".to_string(), 0);
-            let current_section = result.sections.last().unwrap_or(default);
-            let current_section_name = current_section.0.clone();
+            let default = Section { name: "NOSEC".to_string(), start_pos_bytes_original: 0, start_memory_page: 0, start_offset: 0 };
+            let current_section = result.sections.last().unwrap_or(&default);
+            let current_section_name = current_section.name.clone();
             let bytes_in_section = bytes_count - current_section_start;
             let value = current_section_name.clone() + ":" + bytes_in_section.to_string().as_str();
 
@@ -329,14 +339,22 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
 
 pub struct ValueGenResult{
     pub constants: Vec<Replacement>,
-    pub sections: Vec<(String, u32)>, //Name of the section followed by the correct line (starting at 0) from the resulting code.
+    pub sections: Vec<Section>,       //Name of the section followed by the correct line (starting at 0) from the resulting code.
     pub code: Vec<Vec<String>>,
-    pub line_mapping: Vec<(usize, usize)>, // How the new line number in the resulting code above (.0) refers to the original line number (.1)
+    pub line_mapping: Vec<(usize, usize)>,  // How the new line number in the resulting code above (.0) refers to the original line number (.1)
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Section{
+    pub name: String,
+    pub start_pos_bytes_original: usize,    // The offset ignoring memory page alignment
+    pub start_memory_page: usize,           // The n-th memory page from program start
+    pub start_offset: usize                 // The offset within said memory page
 }
 
 #[cfg(test)]
 mod tests{
-    use crate::assembler::valuegen::gen_values;
+    use crate::assembler::valuegen::{gen_values, Section};
     use crate::util::line_mapping::{LineInfo, LineMap};
     use crate::util::replacement::Replacement;
 
@@ -367,9 +385,9 @@ mod tests{
         expected_constants[0].set_is_global(true);
         expected_constants[3].set_is_global(true);
 
-        let expected_sections : Vec<(String, u32)>= vec![
-            ("CODE".to_string(), 0),
-            ("DATA".to_string(), 4),
+        let expected_sections : Vec<Section>= vec![
+            Section { name: "CODE".to_string(), start_offset: 0, start_memory_page: 0, start_pos_bytes_original: 0 },
+            Section { name: "DATA".to_string(), start_offset: 0, start_memory_page: 1, start_pos_bytes_original: 4 },
         ];
 
         let expected_code = vec![

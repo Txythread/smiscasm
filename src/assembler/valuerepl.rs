@@ -1,4 +1,4 @@
-use crate::assembler::valuegen::ValueGenResult;
+use crate::assembler::valuegen::{Section, ValueGenResult};
 use crate::util::code_error::{display_code_error, ErrorNotificationKind};
 use crate::util::line_mapping::LineMap;
 use crate::util::math::resolve_argument;
@@ -17,7 +17,7 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
     let mut output_line_mapping: LineMap = LineMap::new();
 
     result.global_constants = code.constants.clone();
-    result.sections = code.sections.clone();
+    result.sections = code.sections.iter().clone().map(|x|x.clone()).collect();
     result.line_mapping = code.line_mapping.clone();
 
     for i in code.code.iter().enumerate() {
@@ -135,7 +135,7 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
 
             let argument_string = arg.join("");
 
-            let math_solution = resolve_argument(argument_string.clone(), code.constants.clone(), code.sections.clone());
+            let math_solution = resolve_argument(argument_string.clone(), code.constants.clone(), code.sections.iter().clone().map(|x|x.clone()).collect());
 
             if math_solution != ""{
                 final_args.push(math_solution.clone());
@@ -198,7 +198,7 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
 
 pub struct ValueReplResult{
     pub global_constants: Vec<Replacement>,
-    pub sections: Vec<(String, u32)>,           // Name of the section followed by the correct line (starting at 0) from the resulting code.
+    pub sections: Vec<Section>,           // Name of the section followed by the correct line (starting at 0) from the resulting code.
     pub code: Vec<(Vec<String>, LineKind)>,     // The lines of code and if they contain immediate values encoded in global constants.
     pub line_mapping: Vec<(usize, usize)>,      // How the new line number in the resulting code above (.0) refers to the original line number (.1)
 }
@@ -214,7 +214,7 @@ pub enum LineKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::assembler::valuegen::ValueGenResult;
+    use crate::assembler::valuegen::{Section, ValueGenResult};
     use crate::assembler::valuerepl::{replace_values_in_code, LineKind};
     use crate::util::line_mapping::LineMap;
     use crate::util::replacement::Replacement;
@@ -232,9 +232,9 @@ mod tests {
         input_constants[0].set_is_global(true);
         input_constants[3].set_is_global(true);
 
-        let input_sections : Vec<(String, u32)>= vec![
-            ("CODE".to_string(), 0),
-            ("DATA".to_string(), 1),
+        let input_sections : Vec<Section>= vec![
+            Section { name: "CODE".to_string(), start_offset: 0, start_memory_page: 0, start_pos_bytes_original: 0 },
+            Section { name: "DATA".to_string(), start_offset: 1, start_memory_page: 1, start_pos_bytes_original: 1 },
         ];
 
         let input_code = vec![

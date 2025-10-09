@@ -1,15 +1,16 @@
 use colorize::*;
+use crate::assembler::valuegen::Section;
 use crate::util::operation::Operation;
 use crate::util::replacement::Replacement;
 
-pub fn resolve_argument(argument: String, replacements: Vec<Replacement>, sections: Vec<(String, u32)>) -> String {
+pub fn resolve_argument(argument: String, replacements: Vec<Replacement>, sections: Vec<Section>) -> String {
     let replacements = create_string_resolving_replacements(replacements, sections);
 
     resolve_string(argument, replacements)
 }
 
 /// Creates things like page offsets (PAGEOFF), pages (@PAGE) etc.
-fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections: Vec<(String, u32)>) -> Vec<Replacement> {
+fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections: Vec<Section>) -> Vec<Replacement> {
     let mut output_replacements: Vec<Replacement> = Vec::new();
 
     for replacement in replacements {
@@ -26,7 +27,7 @@ fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections
 
             if let Some(page_offset) = page_offset.parse::<i32>().ok() {
                 // The how-many-th section fits the name?
-                if let Some(page_start) = sections.clone().iter().enumerate().find(| &x | x.1.clone().0 == page_name).map(| x | x.0){
+                if let Some(page_start) = sections.clone().iter().enumerate().find(| &x | x.1.clone().name == page_name).map(| x | x.0){
                     output_replacements.push(Replacement::new(format!("{}@PAGE", replacement.get_name()), page_start.to_string(), replacement.get_is_function()));
                     output_replacements.push(Replacement::new(format!("{}@PAGEOFF", replacement.get_name()), page_offset.to_string(), replacement.get_is_function()));
                 }
@@ -172,6 +173,7 @@ fn convert_to_decimal(input: String) -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::assembler::valuegen::Section;
     use crate::util::math::{create_string_resolving_replacements, resolve_argument, resolve_string};
     use crate::util::replacement::Replacement;
 
@@ -191,7 +193,10 @@ mod tests {
     #[test]
     fn test_resolve_string_resolving_replacements() {
         let replacements = vec![Replacement::new("msg".to_string(), "DATA:5".to_string(), false)];
-        let sections = vec![("CODE".to_string(), 1), ("DATA".to_string(), 10)];
+        let sections = vec![
+            Section { name: "CODE".to_string(), start_offset: 0, start_memory_page: 0, start_pos_bytes_original: 0 },
+            Section { name: "DATA".to_string(), start_offset: 1, start_memory_page: 1, start_pos_bytes_original: 1 },
+        ];
 
         let new_replacements = create_string_resolving_replacements(replacements, sections);
 
@@ -207,7 +212,10 @@ mod tests {
             Replacement::new("msg".to_string(), "DATA:5".to_string(), false),
             Replacement::new("msg_len".to_string(), "13".to_string(), false),
         ];
-        let sections = vec![("CODE".to_string(), 1), ("DATA".to_string(), 10)];
+        let sections = vec![
+            Section { name: "CODE".to_string(), start_offset: 0, start_memory_page: 0, start_pos_bytes_original: 0 },
+            Section { name: "DATA".to_string(), start_offset: 1, start_memory_page: 1, start_pos_bytes_original: 1 },
+        ];
 
         let argument_result = resolve_argument("msg@PAGEOFF + msg_len".to_string(), replacements, sections);
 

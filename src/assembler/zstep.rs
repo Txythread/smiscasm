@@ -13,8 +13,8 @@ use crate::util::line_mapping::LineMap;
 pub fn perform_last_step(input: TokenizerResult, instructions: Vec<Instruction>, mut input_line_map: LineMap) -> (Vec<u8>, LineMap) {
     let mut result: Vec<u8> = Vec::new();
     let mut next_page_start = MEMORY_PAGE_SIZE;
-    let mut section_starts_in_lines = input.sections.iter().map(|x| x.clone().1).collect::<Vec<u32>>(); // The lines' (in the input code) indexes that belong to a new section. The first element is always the next section.
-    let mut current_section_name = input.sections.iter().nth(0).unwrap().clone().0;
+    let mut section_starts_in_lines = input.sections.iter().map(|x| x.clone().start_pos_bytes_original as u32).collect::<Vec<u32>>(); // The lines' (in the input code) indexes that belong to a new section. The first element is always the next section.
+    let mut current_section_name = input.sections.iter().nth(0).unwrap().clone().name.clone();
     let mut actual_bytes_written: u32 = 0; // The bytes written that were not written for memory page aligning
     section_starts_in_lines.remove(0);
 
@@ -36,7 +36,7 @@ pub fn perform_last_step(input: TokenizerResult, instructions: Vec<Instruction>,
                 }
                 // Start a new section
                 // Find the section's name
-                current_section_name = input.sections.iter().find(| &x | x.clone().1 == actual_bytes_written).unwrap().clone().0;
+                current_section_name = input.sections.iter().find(| &x | x.clone().start_pos_bytes_original == actual_bytes_written as usize).unwrap().clone().name.clone();
                 // Fill the section with 0s
                 while result.len() < next_page_start {
                     // Push without incrementing the actual_bytes_written

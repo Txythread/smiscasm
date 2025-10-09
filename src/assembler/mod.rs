@@ -1,6 +1,6 @@
 pub mod assembler;
 mod include;
-mod valuegen;
+pub mod valuegen;
 mod valuerepl;
 pub mod splitter;
 mod zstep;
