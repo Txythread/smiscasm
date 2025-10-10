@@ -21,9 +21,6 @@ pub async fn assemble(code: String, instructions: Vec<Instruction>) -> Vec<u8> {
     let tokenized = tokenize(value_repl_result.clone().0, value_repl_result.clone().1);
     let binary = perform_last_step(tokenized.0, instructions, tokenized.1);
 
-
-    println!("value repl: {:?}", value_repl_result.clone().0);
-
     binary.1.summarize();
 
     binary.0

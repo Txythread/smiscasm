@@ -1,5 +1,6 @@
 use colorize::*;
 use crate::assembler::valuegen::Section;
+use crate::config::MEMORY_PAGE_SIZE;
 use crate::util::operation::Operation;
 use crate::util::replacement::Replacement;
 
@@ -10,10 +11,10 @@ pub fn resolve_argument(argument: String, replacements: Vec<Replacement>, sectio
 }
 
 /// Creates things like page offsets (PAGEOFF), pages (@PAGE) etc.
-fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections: Vec<Section>) -> Vec<Replacement> {
+fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections: Vec<Section>, ) -> Vec<Replacement> {
     let mut output_replacements: Vec<Replacement> = Vec::new();
 
-    for replacement in replacements {
+    for replacement in replacements.clone() {
         // Look if it's an address.
         // If yes, generate @PAGE and @PAGEOFF
 
@@ -33,7 +34,13 @@ fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections
 
 
                     // Calculate the relative offset
+                    let function_offset = (page_start * MEMORY_PAGE_SIZE) as i32 + page_offset; // The offset relative to the memory page start (which is also the section start)
+                    if let Some(current_position_replacement) = replacements.iter().find(|&x| x.get_name() == "$") {
+                        let current_position = current_position_replacement.get_value().parse::<i32>().unwrap(); // The current position (from section start, which is also page start)
+                        let relative_offset = (function_offset - current_position) - 4; // Subtract 4 because the next instruction's address will have been loaded into the PC when the addition for relatives occcurs
 
+                        output_replacements.push(Replacement::new(format!("{}@RELATIVE", replacement.get_name()), relative_offset.to_string(), replacement.get_is_function()));
+                    }
                 }
             }
         }

@@ -135,10 +135,13 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
 
             let argument_string = arg.join("");
 
-            let math_solution = resolve_argument(argument_string.clone(), code.constants.clone(), code.sections.iter().clone().map(|x|x.clone()).collect());
+            let mut all_constants = code.constants.clone();
+            let mut line_specific_constants = input_line_mapping.lines[line_number].attributes.line_specific_constants.clone();
+            all_constants.append(&mut line_specific_constants);
+
+            let math_solution = resolve_argument(argument_string.clone(), all_constants, code.sections.iter().clone().map(|x|x.clone()).collect());
 
             if math_solution != ""{
-                println!("Math solution for string {} was {}", argument_string, math_solution);
                 final_args.push(math_solution.clone());
 
                 continue;

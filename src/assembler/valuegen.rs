@@ -321,7 +321,13 @@ pub fn gen_values(code: Vec<Vec<String>>, input_line_map: LineMap) -> (ValueGenR
         result.line_mapping.push((line_number_in_result, line_number));
 
         // Copy the input map's info to the output map
-        let line_info_input = input_line_map.lines[line_number].clone();
+        let mut line_info_input = input_line_map.lines[line_number].clone();
+
+        // Add $, referring to the offset within the page, in bytes
+        let offset_in_page = bytes_count - current_section_start;
+        let dollar = Replacement::new("$".to_string(), offset_in_page.to_string(), false);
+        line_info_input.attributes.line_specific_constants.push(dollar);
+
         output_line_map.add_line(line_info_input);
 
         bytes_count += bytes_per_command;
