@@ -138,6 +138,7 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
             let math_solution = resolve_argument(argument_string.clone(), code.constants.clone(), code.sections.iter().clone().map(|x|x.clone()).collect());
 
             if math_solution != ""{
+                println!("Math solution for string {} was {}", argument_string, math_solution);
                 final_args.push(math_solution.clone());
 
                 continue;
@@ -196,6 +197,7 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
     (result, output_line_mapping)
 }
 
+#[derive(Debug, Clone)]
 pub struct ValueReplResult{
     pub global_constants: Vec<Replacement>,
     pub sections: Vec<Section>,           // Name of the section followed by the correct line (starting at 0) from the resulting code.

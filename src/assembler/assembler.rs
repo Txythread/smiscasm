@@ -3,6 +3,7 @@ use crate::assembler::preprocesser::preprocess;
 use crate::assembler::splitter::split;
 use crate::assembler::tokenizer::tokenize;
 use crate::assembler::valuegen::gen_values;
+use crate::assembler::order_sections::*;
 use crate::assembler::valuerepl::replace_values_in_code;
 use crate::assembler::zstep::perform_last_step;
 use crate::instruction::instruction::Instruction;
@@ -12,11 +13,16 @@ pub async fn assemble(code: String, instructions: Vec<Instruction>) -> Vec<u8> {
     let inclusive = perform_inclusions(code).await;
     let preprocessed = preprocess(inclusive.0, inclusive.1).await;
     let splitted = split(preprocessed.0, preprocessed.1);
-    let value_gen_result = gen_values(splitted.0, splitted.1);
-    let value_repl_result = replace_values_in_code(value_gen_result.0, value_gen_result.1);
-    let tokenized = tokenize(value_repl_result.0, value_repl_result.1);
+    let mut value_gen_result = gen_values(splitted.0, splitted.1);
+
+    value_gen_result.0.sections = order_sections(value_gen_result.0.sections);
+
+    let mut value_repl_result = replace_values_in_code(value_gen_result.0, value_gen_result.1);
+    let tokenized = tokenize(value_repl_result.clone().0, value_repl_result.clone().1);
     let binary = perform_last_step(tokenized.0, instructions, tokenized.1);
 
+
+    println!("value repl: {:?}", value_repl_result.clone().0);
 
     binary.1.summarize();
 

@@ -30,6 +30,10 @@ fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections
                 if let Some(page_start) = sections.clone().iter().enumerate().find(| &x | x.1.clone().name == page_name).map(| x | x.0){
                     output_replacements.push(Replacement::new(format!("{}@PAGE", replacement.get_name()), page_start.to_string(), replacement.get_is_function()));
                     output_replacements.push(Replacement::new(format!("{}@PAGEOFF", replacement.get_name()), page_offset.to_string(), replacement.get_is_function()));
+
+
+                    // Calculate the relative offset
+
                 }
             }
         }
@@ -63,10 +67,18 @@ pub fn resolve_string(string: String, replacements: Vec<Replacement>) -> String 
     let mut operand_2: Option<i64> = None;
     let mut operation: Option<Operation> = None;
 
+    let mut next_operand_is_negative: bool = false;
+
 
     for token in tokens {
         let mut token = token.to_string().trim().to_string();
         if let Some(op) = Operation::from_string(&token) {
+            if matches!(op, Operation::SUBTRACTION) && operand_1.is_none(){
+                // This means this is the sign, not the operation
+                next_operand_is_negative = true;
+                continue;
+            }
+
             operation = Some(op);
             continue;
         }
@@ -82,17 +94,26 @@ pub fn resolve_string(string: String, replacements: Vec<Replacement>) -> String 
 
         if operand_1.is_none() {
 
-            let op_1 = token.parse::<i64>();
+            let mut op_1 = token.parse::<i64>();
 
             if op_1.is_err() { return "".to_string(); }
+
+            if next_operand_is_negative {
+                op_1 = Ok(-op_1.unwrap());
+            }
 
             operand_1 = Some(op_1.unwrap());
             continue;
         }
 
-        let op_2 = token.parse::<i64>();
+        let mut op_2 = token.parse::<i64>();
 
         if op_2.is_err() { return "".to_string(); }
+
+        if next_operand_is_negative {
+            op_2 = Ok(-op_2.unwrap());
+        }
+
 
         operand_2 = Some(op_2.unwrap());
         break;
