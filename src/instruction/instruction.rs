@@ -227,9 +227,6 @@ pub fn get_all_instructions() -> Vec<Instruction> {
         }
 
 
-        println!("Decoded instruction: {}", instruction.name);
-
-
         // Don't ask why
         instructions.push(Instruction {
             name: instruction.name.clone(),

@@ -40,7 +40,6 @@ fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections
                     if let Some(current_position_replacement) = replacements.iter().find(|&x| x.get_name() == "$") {
                         let current_position = current_position_replacement.get_value().parse::<i32>().unwrap() + common_section_offset /*just hope for the same section as the function*/; // The current position (from section start, which is also page start)
                         let relative_offset = (function_offset - current_position) - 4; // Subtract 4 because the next instruction's address will have been loaded into the PC when the addition for relatives occcurs
-                        println!("Relative offset for {} is {} coming from fn-offset: {} and the current position: {}", replacement.get_name(), relative_offset, function_offset, current_position);
                         output_replacements.push(Replacement::new(format!("{}@RELATIVE", replacement.get_name()), relative_offset.to_string(), replacement.get_is_function()));
                     }
                 }
