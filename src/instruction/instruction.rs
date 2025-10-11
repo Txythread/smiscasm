@@ -226,6 +226,10 @@ pub fn get_all_instructions() -> Vec<Instruction> {
             exit(format!("Instruction named {} didn't pass instruction check.", instruction.name), ExitCode::Other);
         }
 
+
+        println!("Decoded instruction: {}", instruction.name);
+
+
         // Don't ask why
         instructions.push(Instruction {
             name: instruction.name.clone(),

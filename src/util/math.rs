@@ -24,21 +24,23 @@ fn create_string_resolving_replacements(replacements: Vec<Replacement>, sections
         // If both of the above values exist, then it's an address.
         if page_name.is_some() && page_offset.is_some() {
             let page_name = page_name.unwrap();
-            let page_offset = page_offset.unwrap();
+            let offset_in_section = page_offset.unwrap();
 
-            if let Some(page_offset) = page_offset.parse::<i32>().ok() {
+            if let Some(offset_in_section) = offset_in_section.parse::<i32>().ok() {
                 // The how-many-th section fits the name?
-                if let Some(page_start) = sections.clone().iter().enumerate().find(| &x | x.1.clone().name == page_name).map(| x | x.0){
-                    output_replacements.push(Replacement::new(format!("{}@PAGE", replacement.get_name()), page_start.to_string(), replacement.get_is_function()));
-                    output_replacements.push(Replacement::new(format!("{}@PAGEOFF", replacement.get_name()), page_offset.to_string(), replacement.get_is_function()));
+                if let Some(function_section) = sections.clone().iter().enumerate().find(| &x | x.1.clone().name == page_name).map(| x | x.1.clone()) {
+                    output_replacements.push(Replacement::new(format!("{}@PAGE", replacement.get_name()), function_section.start_memory_page.to_string(), replacement.get_is_function()));
+                    output_replacements.push(Replacement::new(format!("{}@PAGEOFF", replacement.get_name()), (offset_in_section + function_section.start_offset as i32).to_string(), replacement.get_is_function()));
 
 
                     // Calculate the relative offset
-                    let function_offset = (page_start * MEMORY_PAGE_SIZE) as i32 + page_offset; // The offset relative to the memory page start (which is also the section start)
+                    let function_section_offset = function_section.start_offset as i32;
+                    let common_section_offset = (function_section.start_memory_page * MEMORY_PAGE_SIZE) as i32;
+                    let function_offset =  common_section_offset + offset_in_section + function_section_offset; // The offset relative to the memory page start (which is also the section start)
                     if let Some(current_position_replacement) = replacements.iter().find(|&x| x.get_name() == "$") {
-                        let current_position = current_position_replacement.get_value().parse::<i32>().unwrap(); // The current position (from section start, which is also page start)
+                        let current_position = current_position_replacement.get_value().parse::<i32>().unwrap() + common_section_offset /*just hope for the same section as the function*/; // The current position (from section start, which is also page start)
                         let relative_offset = (function_offset - current_position) - 4; // Subtract 4 because the next instruction's address will have been loaded into the PC when the addition for relatives occcurs
-
+                        println!("Relative offset for {} is {} coming from fn-offset: {} and the current position: {}", replacement.get_name(), relative_offset, function_offset, current_position);
                         output_replacements.push(Replacement::new(format!("{}@RELATIVE", replacement.get_name()), relative_offset.to_string(), replacement.get_is_function()));
                     }
                 }
@@ -223,7 +225,7 @@ mod tests {
         let replacements = vec![Replacement::new("msg".to_string(), "DATA:5".to_string(), false)];
         let sections = vec![
             Section { name: "CODE".to_string(), start_offset: 0, start_memory_page: 0, start_pos_bytes_original: 0 },
-            Section { name: "DATA".to_string(), start_offset: 1, start_memory_page: 1, start_pos_bytes_original: 1 },
+            Section { name: "DATA".to_string(), start_offset: 0, start_memory_page: 1, start_pos_bytes_original: 1 },
         ];
 
         let new_replacements = create_string_resolving_replacements(replacements, sections);
@@ -242,7 +244,7 @@ mod tests {
         ];
         let sections = vec![
             Section { name: "CODE".to_string(), start_offset: 0, start_memory_page: 0, start_pos_bytes_original: 0 },
-            Section { name: "DATA".to_string(), start_offset: 1, start_memory_page: 1, start_pos_bytes_original: 1 },
+            Section { name: "DATA".to_string(), start_offset: 0, start_memory_page: 1, start_pos_bytes_original: 1 },
         ];
 
         let argument_result = resolve_argument("msg@PAGEOFF + msg_len".to_string(), replacements, sections);

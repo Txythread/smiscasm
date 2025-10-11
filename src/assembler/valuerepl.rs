@@ -239,7 +239,7 @@ mod tests {
 
         let input_sections : Vec<Section>= vec![
             Section { name: "CODE".to_string(), start_offset: 0, start_memory_page: 0, start_pos_bytes_original: 0 },
-            Section { name: "DATA".to_string(), start_offset: 1, start_memory_page: 1, start_pos_bytes_original: 1 },
+            Section { name: "DATA".to_string(), start_offset: 0, start_memory_page: 1, start_pos_bytes_original: 1 },
         ];
 
         let input_code = vec![
