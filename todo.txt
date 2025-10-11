@@ -4,9 +4,7 @@ TODO:
 * Add symbol list support
 * Struct-like structures?
 * General: sfs implementation in smisc-connect?
-* Combine CLI-argument related stuff to library
 * Add persistent storage to vm
-* Add @RELATIVE
 * Upload register design files
 * Add files names to errors
 
