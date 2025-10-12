@@ -13,7 +13,7 @@ Personal Comment:
 
     also missing:
             registers (working, not enough)
-            clock (untested)
+            clock (untested, wrong fucking cap size)
             more buffers!
 
 
