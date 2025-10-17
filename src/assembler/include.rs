@@ -13,9 +13,11 @@ use crate::util::line_mapping::{ LineMap, LineInfo };
 
 
 /// Recursively goes throw all "!include"s and includes them recursively.
-pub async fn perform_inclusions(code: String) -> (String, LineMap) {
+pub async fn perform_inclusions(code: String, file_name: String) -> (String, LineMap) {
     let mut result: Vec<String> = vec![];
     let mut line_map = LineMap::new();
+
+    line_map.set_current_file_name(file_name);
 
 
     let mut current_line_number = 1u32;
@@ -26,7 +28,7 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
             result.push(line.to_string());
 
             // Add this to the line map
-            line_map.add_line(LineInfo::new_no_info(line.to_string(), current_line_number));
+            line_map.add_line_file_preserving(LineInfo::new_no_info(line.to_string(), current_line_number));
             current_line_number += 1;
 
             continue;
@@ -39,12 +41,12 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
         // Look if the file exists.
         if let Some(file) = expand_path(inclusion_argument.as_str()) {
             if let Some(file_contents) = read_to_string(file).ok() {
-                let file_contents = Box::pin(perform_inclusions(file_contents)).await.0;
-                result.push(file_contents.clone());
+                let file_contents = Box::pin(perform_inclusions(file_contents, inclusion_argument)).await;
+                result.push(file_contents.0.clone());
 
                 // Update line mapping
-                for x in file_contents.split('\n'){
-                    line_map.add_line(LineInfo::new_no_info(x.to_string(), current_line_number));
+                for i in 0..file_contents.1.lines.len() {
+                    line_map.add_line(file_contents.1.lines[i].clone());
                 }
 
                 current_line_number += 1;
@@ -61,12 +63,12 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
         // Check if it exists already
         if let Some(file) = expand_path(file_name.as_str()) {
             if let Some(file_contents) = read_to_string(file).ok() {
-                let file_contents = Box::pin(perform_inclusions(file_contents)).await.0;
-                result.push(file_contents.clone());
+                let file_contents = Box::pin(perform_inclusions(file_contents, inclusion_argument)).await;
+                result.push(file_contents.0.clone());
 
                 // Update line mapping
-                for x in file_contents.split('\n'){
-                    line_map.add_line(LineInfo::new_no_info(x.to_string(), current_line_number));
+                for i in 0..file_contents.1.lines.len() {
+                    line_map.add_line(file_contents.1.lines[i].clone());
                 }
 
                 current_line_number += 1;
@@ -83,12 +85,12 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
 
         // Try to download the URL
         if let Some(include_source_code) = attempt_download(inclusion_argument.clone(), file_name.clone(), inclusion_argument.clone()).await {
-            let file_contents = Box::pin(perform_inclusions(include_source_code)).await.0;
-            result.push(file_contents.clone());
+            let file_contents = Box::pin(perform_inclusions(include_source_code, inclusion_argument)).await;
+            result.push(file_contents.0.clone());
 
             // Update line mapping
-            for x in file_contents.split('\n'){
-                line_map.add_line(LineInfo::new_no_info(x.to_string(), current_line_number));
+            for i in 0..file_contents.1.lines.len() {
+                line_map.add_line(file_contents.1.lines[i].clone());
             }
 
             current_line_number += 1;
@@ -108,12 +110,12 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
 
             // Look if it has been downloaded already.
             if let Some(file_contents) = read_to_string(file_name.clone()).ok() {
-                let file_contents = Box::pin(perform_inclusions(file_contents)).await.0;
-                result.push(file_contents.clone());
+                let file_contents = Box::pin(perform_inclusions(file_contents, inclusion_argument)).await;
+                result.push(file_contents.0.clone());
 
                 // Update line mapping
-                for x in file_contents.split('\n'){
-                    line_map.add_line(LineInfo::new_no_info(x.to_string(), current_line_number));
+                for i in 0..file_contents.1.lines.len() {
+                    line_map.add_line(file_contents.1.lines[i].clone());
                 }
 
                 current_line_number += 1;
@@ -123,12 +125,12 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
 
             // Doesn't exist -> Download it
             if let Some(include_source_code) = attempt_download(url, file_name, inclusion_argument.clone()).await {
-                let file_contents = Box::pin(perform_inclusions(include_source_code)).await.0;
-                result.push(file_contents.clone());
+                let file_contents = Box::pin(perform_inclusions(include_source_code, inclusion_argument)).await;
+                result.push(file_contents.0.clone());
 
                 // Update line mapping
-                for x in file_contents.split('\n'){
-                    line_map.add_line(LineInfo::new_no_info(x.to_string(), current_line_number));
+                for i in 0..file_contents.1.lines.len() {
+                    line_map.add_line(file_contents.1.lines[i].clone());
                 }
 
                 current_line_number += 1;
@@ -150,7 +152,7 @@ pub async fn perform_inclusions(code: String) -> (String, LineMap) {
         code.push(line.to_string());
 
         let column = 9; // The length of the !include statement
-        display_code_error(ErrorNotificationKind::Error, current_line_number as i32, Some(column), Some(inclusion_argument.len() as u32), "Library not found".to_string(), "There was no file found with that name, no URL with that name could be reached and there's no such well-known public library.".to_string(), code);
+        display_code_error(ErrorNotificationKind::Error, current_line_number as i32, Some(column), Some(inclusion_argument.len() as u32), "Library not found".to_string(), "There was no file found with that name, no URL with that name could be reached and there's no such well-known public library.".to_string(), code, "".to_string());
         line_map.errors_count += 1;
         line_map.stop_after_step = true;
     }

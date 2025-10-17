@@ -27,6 +27,9 @@ pub fn split(input: Vec<String>, mut input_line_map: LineMap) -> (Vec<Vec<String
         let mut current_token_start = 0;
 
         let mut current_char_count = -1i32;
+
+        let file_name= input_line_map.lines[line_number].clone().source_file_name;
+
         for i in line.chars().enumerate() {
             let char = i.1.clone();
             current_char_count += 1;
@@ -108,7 +111,7 @@ pub fn split(input: Vec<String>, mut input_line_map: LineMap) -> (Vec<Vec<String
 
                         code.push(line.clone());
 
-                        display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_token.len() + 2) as u32), "Empty String Literal".to_string(), "Empty string literals are not allowed, but an empty string literal was found here.".to_string(), code);
+                        display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_token.len() + 2) as u32), "Empty String Literal".to_string(), "Empty string literals are not allowed, but an empty string literal was found here.".to_string(), code, file_name.clone());
                         input_line_map.errors_count += 1;
                         output_line_map.stop_after_step = true;
                     }
@@ -160,7 +163,7 @@ pub fn split(input: Vec<String>, mut input_line_map: LineMap) -> (Vec<Vec<String
             code.push(line.clone());
 
 
-            display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_char_count - current_token_start + 2) as u32), "Unterminated String Literal".to_string(), "String literals always need to be terminated, but this one wasn't closed.\nAdd the missing \".".to_string(), code);
+            display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some((current_token_start - 1) as u32), Some((current_char_count - current_token_start + 2) as u32), "Unterminated String Literal".to_string(), "String literals always need to be terminated, but this one wasn't closed.\nAdd the missing \".".to_string(), code, file_name);
             input_line_map.errors_count += 1;
             output_line_map.stop_after_step = true;
         }

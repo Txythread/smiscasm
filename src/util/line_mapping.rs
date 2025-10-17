@@ -8,16 +8,17 @@ use crate::util::replacement::Replacement;
 
 #[derive(Debug, Clone)]
 pub struct LineMap{
-    pub lines: Vec<LineInfo>,           // The lines that currently exist. Current & Real lines are not one-to-one.
-    pub stop_after_step: bool,          // Stop after the current step has been executed, but finish this one.
-    pub warnings_count: usize,          // The amount of warnings
-    pub errors_count: usize,            // The amount of errors. If > 0, compilation will not succeed.
-    current_mode: CodeInterpretationMode// For adding new lines only, this is a help structure and should never be exposed.
+    pub lines: Vec<LineInfo>,               // The lines that currently exist. Current & Real lines are not one-to-one.
+    pub stop_after_step: bool,              // Stop after the current step has been executed, but finish this one.
+    pub warnings_count: usize,              // The amount of warnings
+    pub errors_count: usize,                // The amount of errors. If > 0, compilation will not succeed.
+    current_mode: CodeInterpretationMode,   // For adding new lines only, this is a help structure and should never be exposed.
+    current_file_name: String,
 }
 
 impl LineMap{
     pub fn new() -> LineMap{
-        LineMap{lines: Vec::new(), stop_after_step: false, warnings_count: 0, errors_count: 0, current_mode: DEFAULT_MODE }
+        LineMap{lines: Vec::new(), stop_after_step: false, warnings_count: 0, errors_count: 0, current_mode: DEFAULT_MODE, current_file_name: ".".to_string() }
     }
 
     #[cfg(test)]
@@ -28,7 +29,7 @@ impl LineMap{
             lines.push(LineInfo::new("as as sas asd".to_string(), 0, vec![(0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1), (0, 1)], i));
         }
 
-        LineMap { lines, stop_after_step: false, warnings_count:0, errors_count:0, current_mode: DEFAULT_MODE }
+        LineMap { lines, stop_after_step: false, warnings_count:0, errors_count:0, current_mode: DEFAULT_MODE, current_file_name: "".to_string() }
     }
 
     /// Add a line in the next position
@@ -36,6 +37,17 @@ impl LineMap{
         let mut line = line.clone();
         line.attributes.mode = self.clone().current_mode;
         self.lines.push(line);
+    }
+    
+    pub fn add_line_file_preserving(&mut self, line: LineInfo){
+        let mut line = line.clone();
+        line.attributes.mode = self.clone().current_mode;
+        line.source_file_name = self.current_file_name.clone();
+        self.lines.push(line);
+    }
+    
+    pub fn set_current_file_name(&mut self, file_name: String){
+        self.current_file_name = file_name;
     }
 
     pub fn set_mode(&mut self, mode: CodeInterpretationMode){
@@ -57,6 +69,7 @@ impl LineMap{
 
 
         let line_info = self.lines[line_number_in_current as usize].clone();
+        let source_file_name = line_info.source_file_name.clone();
 
         let mut code: Vec<String> = vec![];
 
@@ -72,12 +85,13 @@ impl LineMap{
             if let Some(token) = line_info.token_info.iter().nth(token_number as usize){
                 let token = token.clone();
 
-                display_code_error(kind, line_info.line_number as i32, Some(token.0), Some(token.1), title, message, code);
+                display_code_error(kind, line_info.line_number as i32, Some(token.0), Some(token.1), title, message, code, source_file_name);
                 return;
             }
         }
 
-        display_code_error(kind.clone(), line_info.line_number as i32, None, None, title, message + "\n", code);
+
+        display_code_error(kind.clone(), line_info.line_number as i32, None, None, title, message + "\n", code, source_file_name);
     }
 
 
@@ -95,6 +109,7 @@ impl LineMap{
 
 
         let line_info = self.lines[line_number_in_current as usize].clone();
+        let source_file_name = line_info.source_file_name.clone();
 
         let mut code: Vec<String> = vec![];
 
@@ -112,12 +127,13 @@ impl LineMap{
                 let end_token_end = end_token.0 + end_token.1;
                 let length = end_token_end - start_token.0;
                 // Start the underlined part with the start position of the start token and end it with the stop position of the end token (which is its start pos + its length).
-                display_code_error(kind, line_info.line_number as i32, Some(start_token.0), Some(length), title, message + "\n", code);
+                display_code_error(kind, line_info.line_number as i32, Some(start_token.0), Some(length), title, message + "\n", code, source_file_name);
                 return;
             }
         }
 
-        display_code_error(kind.clone(), line_info.line_number as i32, None, None, title, message, code);
+
+        display_code_error(kind.clone(), line_info.line_number as i32, None, None, title, message, code, source_file_name);
     }
 
     pub fn exit_if_needed(&mut self){
@@ -148,9 +164,10 @@ impl LineMap{
 #[derive(Clone, Debug)]
 pub struct LineInfo {
     pub contents: String,           // The contents (without leading & trailing whitespaces)
-    indent: u32,                // The indent (in spaces) this line has (for formatting)
+    indent: u32,                    // The indent (in spaces) this line has (for formatting)
     pub token_info: Vec<(u32, u32)>,// The start of a token and its length
     pub line_number: u32,           // The original line number
+    pub source_file_name: String,
     pub attributes: LineAttributes,
 }
 
@@ -171,7 +188,7 @@ pub enum CodeInterpretationMode{
 impl LineInfo{
     #[cfg(test)]
     pub fn new(contents: String, indent: u32, token_info: Vec<(u32, u32)>, line_number: u32) -> LineInfo{
-        LineInfo{contents, indent, token_info, line_number, attributes: LineAttributes { line_specific_constants: Vec::new(), mode: CodeInterpretationMode::None } }
+        LineInfo{contents, indent, token_info, line_number, source_file_name: "".to_string(), attributes: LineAttributes { line_specific_constants: Vec::new(), mode: CodeInterpretationMode::None } }
     }
 
     /// Generate a new LineInfo with text only, without any info about tokens.
@@ -188,6 +205,6 @@ impl LineInfo{
 
         let contents = line.trim().to_string();
 
-        LineInfo { contents, indent: line_whitespace_length, token_info: vec![], line_number, attributes: LineAttributes { line_specific_constants: vec![], mode: CodeInterpretationMode::None } }
+        LineInfo { contents, indent: line_whitespace_length, token_info: vec![], line_number, source_file_name: "".to_string(), attributes: LineAttributes { line_specific_constants: vec![], mode: CodeInterpretationMode::None } }
     }
 }

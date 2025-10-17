@@ -4,7 +4,7 @@
 use colorize::AnsiColor;
 
 /// Notify the user that a mistake is in the code.
-pub fn display_code_error(kind: ErrorNotificationKind, line: i32, column: Option<u32>, underlined_length: Option<u32>, title: String, message: String, code: Vec<String>) {
+pub fn display_code_error(kind: ErrorNotificationKind, line: i32, column: Option<u32>, underlined_length: Option<u32>, title: String, message: String, code: Vec<String>, file_name: String) {
     let formated_title: String;
     let formated_message: String;
 
@@ -23,8 +23,31 @@ pub fn display_code_error(kind: ErrorNotificationKind, line: i32, column: Option
     // Print the title
     println!("{}", formated_title);
 
-    // Print the affected line
-    println!("{}:\t{}", line, code[line as usize].clone().to_string());
+    let line_number_string = format!("{} ", line);
+
+    // Print the path if it exists
+    if !file_name.is_empty() {
+        for _ in 0..line_number_string.len()-2 /*Guaranteed to be >= 2 (space + ziffer)*/{
+            print!(" ");
+        }
+        println!("{}", format!(" --> {}", file_name).blue());
+    }
+
+    // Print the affected line and the | before and after
+
+
+    let mut seperator = String::new();
+
+    for _ in 0..line_number_string.len() {
+        seperator += " ";
+    }
+
+    seperator += "|";
+    seperator = seperator.blue();
+
+    println!("{}", seperator);
+    println!("{}\t{}", format!("{}|", line_number_string).blue(), code[line as usize].clone().to_string());
+    print!("{}", seperator);
 
     if let Some(column) = column {
         // Generate an offset in spaces to underline/point to the wrong line
@@ -59,6 +82,9 @@ pub fn display_code_error(kind: ErrorNotificationKind, line: i32, column: Option
         }
 
         println!("{}", hint_string);
+
+        // Print one more separator to ensure readability as the hint string takes up extra space
+        println!("{}", seperator);
     }
 
     println!("{}\n", formated_message);

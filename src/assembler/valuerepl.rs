@@ -30,6 +30,8 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
 
         let first_token = first_token.unwrap();
 
+        let source_file_name = input_line_mapping.lines[line_number].clone().source_file_name;
+
         if first_token == "." {
             // At this stage, the only thing it could be is data.
             let second_token = line[1].clone();
@@ -172,7 +174,8 @@ pub fn replace_values_in_code(code: ValueGenResult, mut input_line_mapping: Line
 
             code.push(input_line_mapping.lines[line_number].contents.clone());
 
-            display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some(start_pos), Some(in_between_tokens_length), "Argument Decoding Error".to_string(), "Can't decode this argument. Check whether all variables exist if applicable.".to_string(), code);
+
+            display_code_error(ErrorNotificationKind::Error, real_line_number as i32, Some(start_pos), Some(in_between_tokens_length), "Argument Decoding Error".to_string(), "Can't decode this argument. Check whether all variables exist if applicable.".to_string(), code, source_file_name.clone());
             input_line_mapping.stop_after_step = true;
             input_line_mapping.errors_count += 1;
         }

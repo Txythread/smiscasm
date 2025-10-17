@@ -93,7 +93,7 @@ async fn main() {
 
 
 
-        let binary = assemble(input_file, instructions).await;
+        let binary = assemble(input_file, instructions, relative_path.clone()).await;
 
         // Generate the output file name in case it doesn't exist.
         if args.output_name.is_none(){

@@ -6,19 +6,19 @@
 # N/A
 # Modified Registers:
 # x0, x1, x17, x18, x19
-print:
+_print:
 	# Register Mapping:
 	# x0  ... position of the next character in memory
 	# x17 ... print loop address
 	# x18 ... print end address
 	# x19 ... current character
-	adrp x17, debuglib-print-loop@PAGE
+	asdfadrp x17, _debuglib_print_loop@PAGE
 	mov x18, x17 # The page will always be the same
-	add x17, debuglib-print-loop@PAGEOFF
-	add x18, debuglib-print-end@PAGEOFF
+	add x17, _debuglib_print_loop@PAGEOFF
+	add x18, _debuglib_print_end@PAGEOFF
 
 # Print character, increment, stop logic
-debuglib-print-loop:
+_debuglib_print_loop:
 	lb x19, x0
 	out x19
 	add x0, 1
@@ -27,5 +27,5 @@ debuglib-print-loop:
 	jmp x17
 
 # Return to previous function
-debuglib-print-end:
+_debuglib_print_end:
 	ret
