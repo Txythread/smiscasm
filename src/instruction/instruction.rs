@@ -20,10 +20,10 @@ Personal Comment:
     Required components besides regs, main bus & decoders:
 
     special registers:
-        memory address pointer
-        instruction register
-        alu a
-        alu b
+        memory address pointer (no output buffers required)
+        instruction register (no output buffers required)
+        alu a (no output buffers required)
+        alu b (no output buffers required)
 
 
     program counter:
@@ -63,6 +63,9 @@ Personal Comment:
         sp out
         sp decrement 4B
         sp increment 4B
+
+    control unit:
+        misc, not addressed directly
 */
 #[derive(Debug)]
 pub struct Instruction {

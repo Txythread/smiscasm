@@ -27,7 +27,7 @@ pub fn display_code_error(kind: ErrorNotificationKind, line: i32, column: Option
 
     // Print the path if it exists
     if !file_name.is_empty() {
-        for _ in 0..line_number_string.len()-2 /*Guaranteed to be >= 2 (space + ziffer)*/{
+        for _ in 0..line_number_string.len()-2 /*Guaranteed to be >= 2 (space + numeral)*/{
             print!(" ");
         }
         println!("{}", format!(" --> {}", file_name).blue());
