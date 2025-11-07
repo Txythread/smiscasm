@@ -86,6 +86,14 @@ else
   cd ..
 fi
 
+cd smiscc 1>/dev/null 2>/dev/null
+
+if [ $? -ne 0 ]; then
+  SKIP_DOWNLOAD=1 # Don't skip
+
+else
+  cd ..
+fi
 
 
 if [ $SKIP_DOWNLOAD -ne 0 ]; then
@@ -95,6 +103,7 @@ if [ $SKIP_DOWNLOAD -ne 0 ]; then
   git clone https://github.com/Txythread/smiscasm
   git clone https://github.com/Txythread/smiscvm
   git clone https://github.com/Txythread/smisc-connect
+  git clone https://github.com/Txythread/smiscc
 
   wait $!
 
@@ -154,6 +163,11 @@ cd ../smisc-connect
 ./build.sh
 cd ..
 
+
+cd ../smiscc
+./production.sh
+cd ..
+
 wait $!
 
 # Check if smiscvm compiled successfuly
@@ -176,6 +190,22 @@ fi
 
 
 echo "smisc-connect compiled"
+
+
+# Check if smiscvm compiled successfuly
+which smiscc 1>/dev/null
+
+if [ $? -ne 0 ]; then
+	echo "Couldn't compile smiscc. Please try to execute the production.sh script in the smiscc directory & fix the issue. Sorry. Btw smiscasm, smisc-connect & smiscvm compiled just fine." 1>&2
+	exit 1
+fi
+
+
+echo "smiscc compiled"
+
+
+
+
 
 # Remove the leftovers if requested.
 printf "Do you want to remove the installation folders (n if you want to modify the program)? [y/N] "
