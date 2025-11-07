@@ -1,6 +1,7 @@
 use std::string::ToString;
 use include_dir::{include_dir, Dir};
-use crate::util::exit::{ exit, ExitCode };
+use crate::instruction::micro_operation::generate_empty_control_word;
+use crate::util::exit::{exit, ExitCode };
 use crate::util::remove_comments::remove_comments_in_line;
 
 const INSTRUCTION_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/instructions");
@@ -152,7 +153,11 @@ impl Instruction {
         result.op_code = op_code;
 
         let mut call_word: u16 = (op_code & 0x01FF) << 5;
-        let mut current_stage_control_word: u64 = 0;
+        
+        // The output of the control unit when it receives the call_word as an input.
+        // The call word is actually a word, unlike the control word, which is actually 
+        // a quad word.
+        let mut current_stage_control_word: u64 = generate_empty_control_word();
 
         for line in lines {
             let line_with_whitespaces = remove_comments_in_line(line.to_string());
@@ -193,7 +198,9 @@ impl Instruction {
                         if instruction_name != line { continue; }
 
                         let i = i.0;
-                        current_stage_control_word = current_stage_control_word | (1 << i);
+                        
+                        let mask = 1u64 << i;
+                        current_stage_control_word = current_stage_control_word ^ mask;
                     }
                 }
             }
