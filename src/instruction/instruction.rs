@@ -1,6 +1,6 @@
 use std::string::ToString;
 use include_dir::{include_dir, Dir};
-use crate::instruction::micro_operation::generate_empty_control_word;
+use crate::instruction::micro_operation::{generate_empty_control_word, MICRO_OPERATIONS};
 use crate::util::exit::{exit, ExitCode };
 use crate::util::remove_comments::remove_comments_in_line;
 
@@ -153,9 +153,9 @@ impl Instruction {
         result.op_code = op_code;
 
         let mut call_word: u16 = (op_code & 0x01FF) << 5;
-        
+
         // The output of the control unit when it receives the call_word as an input.
-        // The call word is actually a word, unlike the control word, which is actually 
+        // The call word is actually a word, unlike the control word, which is actually
         // a quad word.
         let mut current_stage_control_word: u64 = generate_empty_control_word();
 
@@ -192,14 +192,12 @@ impl Instruction {
 
                 _ => {
                     // Go through every word and find the one that fits and add that info to the control word
-                    for i in output_map.iter().enumerate(){
-                        let instruction_name = i.1.to_string();
+                    for i in MICRO_OPERATIONS.iter(){
+                        let instruction_name = i.name.to_string();
 
                         if instruction_name != line { continue; }
 
-                        let i = i.0;
-                        
-                        let mask = 1u64 << i;
+                        let mask = 1u64 << i.pos_in_control_word;
                         current_stage_control_word = current_stage_control_word ^ mask;
                     }
                 }
